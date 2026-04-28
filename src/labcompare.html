@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LabCompare - Lab Test Price Comparison</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;background:#f4f5f7;color:#1a1a1a;min-height:100vh}
+/* NAV */
+.nav{background:#1D9E75;height:56px;display:flex;align-items:center;padding:0 1.5rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1140px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;font-size:18px;font-weight:600;cursor:pointer;text-decoration:none;user-select:none}
+.brand-icon{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-links{display:flex;gap:3px}
+.nl{border:none;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);padding:7px 15px;border-radius:7px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;font-weight:500}
+.nl:hover{background:rgba(255,255,255,.22);color:#fff}
+.nl.on{background:rgba(255,255,255,.25);color:#fff}
+.nl.adm{background:rgba(0,0,0,.2);color:#fff}
+/* PAGES */
+.page{max-width:1140px;margin:0 auto;padding:1.4rem 1rem;display:none}
+.page.on{display:block}
+/* CARDS */
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1rem 1.25rem}
+/* INPUTS */
+.inp{width:100%;border:1.5px solid #dde1e7;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;background:#fff;color:#1a1a1a}
+.inp:focus{border-color:#1D9E75;box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.inp.invalid{border-color:#e24b4a}
+.inp:disabled{background:#f8f8f8;cursor:not-allowed}
+select.inp{cursor:pointer}
+textarea.inp{resize:vertical;min-height:60px}
+/* BUTTONS */
+.btn{cursor:pointer;border:1.5px solid #dde1e7;border-radius:8px;padding:8px 18px;background:#fff;font-size:13px;font-weight:500;transition:all .15s;font-family:inherit;color:#333;line-height:1}
+.btn:hover{background:#f5f5f5;border-color:#ccc}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.btn-primary:hover{background:#19896A}
+.btn-secondary{background:#fff;color:#444;border-color:#dde1e7}
+.btn-danger{background:#fff2f2;color:#c0392b;border-color:#f5c6c6}
+.btn-danger:hover{background:#ffe0e0}
+.btn-sm{padding:5px 11px;font-size:12px}
+/* CHIPS */
+.chip{cursor:pointer;border:1.5px solid #dde1e7;border-radius:20px;padding:5px 13px;font-size:12px;background:#fff;color:#555;transition:all .15s;font-family:inherit;font-weight:500}
+.chip:hover{border-color:#1D9E75;color:#1D9E75}
+.chip.on{background:#E1F5EE;border-color:#9FE1CB;color:#085041;font-weight:600}
+/* SLOT BUTTONS */
+.slt{cursor:pointer;border:1.5px solid #dde1e7;border-radius:8px;padding:9px 6px;text-align:center;font-size:12px;background:#fff;color:#333;transition:all .15s;font-family:inherit;font-weight:500;line-height:1.4}
+.slt:hover{border-color:#1D9E75;color:#1D9E75}
+.slt.on{border-color:#1D9E75;background:#E1F5EE;color:#085041;font-weight:600}
+/* TAGS & BADGES */
+.tag{background:#f3f4f6;color:#555;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #eaecf0;font-weight:500}
+.badge-best{background:#E1F5EE;color:#085041;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap}
+.badge-confirmed{background:#E1F5EE;color:#085041;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;display:inline-block}
+.badge-cancelled{background:#fff2f2;color:#c0392b;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;display:inline-block}
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.form-label{font-size:12px;color:#555;font-weight:600}
+.form-err{font-size:12px;color:#c0392b;margin-top:3px;display:none}
+.form-err.show{display:block}
+/* STEPPER */
+.stepper{display:flex;align-items:center;margin-bottom:18px}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;transition:all .2s;flex-shrink:0}
+.step-dot.idle{background:#f3f4f6;color:#aaa;border:1.5px solid #dde1e7}
+.step-dot.active{background:#E1F5EE;color:#085041;border:2px solid #1D9E75}
+.step-dot.done{background:#1D9E75;color:#fff;border:2px solid #1D9E75}
+.step-label{font-size:12px;font-weight:500;margin-left:6px}
+.step-label.idle{color:#aaa}
+.step-label.active,.step-label.done{color:#085041;font-weight:600}
+.step-line{flex:1;height:1.5px;background:#e8e8e8;margin:0 8px}
+.step-line.done{background:#1D9E75}
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:10px 14px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #eee;white-space:nowrap;font-size:12px;background:#fafafa}
+tbody td{padding:10px 14px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+tbody tr:hover td{background:#fafafa}
+tbody tr:last-child td{border-bottom:none}
+code{font-family:monospace;font-size:11px;background:#f3f4f6;padding:2px 7px;border-radius:5px;color:#555}
+/* MISC */
+.divider{border-top:1px solid #eee;margin:12px 0}
+.empty-state{text-align:center;padding:3rem 1rem;color:#aaa}
+.empty-state svg{margin-bottom:12px;opacity:.4}
+.toast{display:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:14px}
+.toast.success{background:#E1F5EE;color:#085041;border:1px solid #9FE1CB}
+.toast.error{background:#fff2f2;color:#c0392b;border:1px solid #f5c6c6}
+/* RESPONSIVE */
+@media(max-width:700px){
+  .nav-links .nl-label{display:none}
+  .search-bar{flex-direction:column}
+  .search-bar .inp{width:100%}
+  .grid-2{grid-template-columns:1fr!important}
+  .grid-3{grid-template-columns:1fr 1fr!important}
+  .content-grid{grid-template-columns:1fr!important}
+  .date-grid{grid-template-columns:repeat(4,1fr)!important}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand" onclick="goPage('search')">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+      </div>
+      LabCompare
+    </div>
+    <div class="nav-links">
+      <button class="nl on" id="nav-search" onclick="goPage('search')"><span class="nl-label">Compare Tests</span><span class="nl-icon" style="display:none">🔍</span></button>
+      <button class="nl" id="nav-book" onclick="goPage('book')"><span class="nl-label">Book Test</span></button>
+      <button class="nl" id="nav-mybookings" onclick="goPage('mybookings')"><span class="nl-label">My Bookings</span></button>
+      <button class="nl adm" id="nav-admin" onclick="goPage('admin')"><span class="nl-label">Admin</span></button>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== SEARCH PAGE ==================== -->
+<div id="page-search" class="page on">
+  <div class="card" style="margin-bottom:12px">
+    <div class="search-bar" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px;position:relative">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#aaa;pointer-events:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="inp" id="search-q" placeholder="Search by test name or category..." style="padding-left:33px" oninput="onSearchInput()">
+      </div>
+      <div style="position:relative;min-width:130px">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#aaa;pointer-events:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+        <input class="inp" id="search-city" placeholder="Filter by city..." style="padding-left:30px;width:140px" oninput="renderPriceList()">
+      </div>
+      <select class="inp" id="search-sort" style="width:160px" onchange="renderPriceList()">
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="rating">Best Rated</option>
+        <option value="name">Lab Name A-Z</option>
+      </select>
+    </div>
+    <div id="cat-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  </div>
+  <div class="content-grid" style="display:grid;grid-template-columns:250px 1fr;gap:12px">
+    <div class="card" style="padding:0;overflow:hidden;max-height:72vh;overflow-y:auto;align-self:start">
+      <div style="padding:10px 14px;font-size:12px;font-weight:600;color:#555;border-bottom:1px solid #eee;background:#fafafa;display:flex;align-items:center;justify-content:space-between">
+        TESTS <span id="test-count-badge" style="background:#E1F5EE;color:#085041;border-radius:10px;padding:1px 8px;font-size:11px"></span>
+      </div>
+      <div id="test-list"></div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;min-height:20px">
+        <span id="price-result-info" style="font-size:12px;color:#888"></span>
+      </div>
+      <div id="price-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BOOK PAGE ==================== -->
+<div id="page-book" class="page" style="max-width:640px">
+  <div id="book-banner" class="card" style="margin-bottom:14px;background:#E1F5EE;border-color:#9FE1CB;display:none"></div>
+  <div id="book-no-selection" class="card" style="text-align:center;padding:2rem;color:#888">
+    <p>No test selected.</p>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="goPage('search')">Go to Compare Tests</button>
+  </div>
+  <div id="book-form-wrap" style="display:none">
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-dot active" id="sd1">1</div><span class="step-label active" id="sl1">Details</span>
+      <div class="step-line" id="sline1"></div>
+      <div class="step-dot idle" id="sd2">2</div><span class="step-label idle" id="sl2">Schedule</span>
+      <div class="step-line" id="sline2"></div>
+      <div class="step-dot idle" id="sd3">3</div><span class="step-label idle" id="sl3">Confirm</span>
+    </div>
+    <!-- Step 1 -->
+    <div id="book-step1" class="card">
+      <p style="font-weight:600;font-size:15px;margin-bottom:14px">Patient details</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full name *</label>
+          <input class="inp" id="b-name" placeholder="Enter full name">
+          <span class="form-err" id="err-name">Full name is required</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input class="inp" id="b-age" type="number" min="1" max="120" placeholder="Age in years">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile number *</label>
+          <input class="inp" id="b-phone" placeholder="10-digit mobile number" maxlength="15">
+          <span class="form-err" id="err-phone">Enter a valid 10-digit mobile number</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (optional)</label>
+          <input class="inp" id="b-email" type="email" placeholder="you@email.com">
+          <span class="form-err" id="err-email">Enter a valid email address</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sample collection type</label>
+        <div style="display:flex;gap:8px;margin-top:2px">
+          <div class="slt on" id="col-HOME" onclick="selectCollection('HOME')" style="flex:1">
+            <div>Home Collection</div>
+            <div style="font-size:11px;color:#085041;margin-top:3px">+₹50 convenience fee</div>
+          </div>
+          <div class="slt" id="col-LAB" onclick="selectCollection('LAB')" style="flex:1">
+            <div>Visit Lab</div>
+            <div style="font-size:11px;color:#aaa;margin-top:3px">No extra charge</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group" id="addr-group">
+        <label class="form-label">Collection address *</label>
+        <textarea class="inp" id="b-addr" placeholder="Full address for sample pickup (flat no, street, area, city, pincode)" rows="2"></textarea>
+        <span class="form-err" id="err-addr">Home address is required for home collection</span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-primary" onclick="bookNext1()">Next: Schedule </button>
+      </div>
+    </div>
+    <!-- Step 2 -->
+    <div id="book-step2" class="card" style="display:none">
+      <p style="font-weight:600;font-size:15px;margin-bottom:14px">Select appointment</p>
+      <div class="form-group">
+        <label class="form-label">Choose date</label>
+        <div id="date-grid" class="date-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:4px"></div>
+        <span class="form-err" id="err-date">Please select an appointment date</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Choose time slot</label>
+        <div id="time-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:4px"></div>
+        <span class="form-err" id="err-slot">Please select a time slot</span>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-secondary" onclick="bookGoStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="bookNext2()">Review Booking </button>
+      </div>
+    </div>
+    <!-- Step 3 -->
+    <div id="book-step3" class="card" style="display:none">
+      <p style="font-weight:600;font-size:15px;margin-bottom:14px">Review &amp; confirm</p>
+      <div id="book-summary" style="background:#f8f9fa;border-radius:8px;border:1px solid #eee;padding:14px;margin-bottom:14px;font-size:13px"></div>
+      <div class="form-group">
+        <label class="form-label">Payment method</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <div class="slt on" id="pay-UPI" onclick="selectPayment('UPI')" style="flex:1">UPI</div>
+          <div class="slt" id="pay-CARD" onclick="selectPayment('CARD')" style="flex:1">Card</div>
+          <div class="slt" id="pay-CASH" onclick="selectPayment('CASH')" style="flex:1">Pay at Lab</div>
+        </div>
+      </div>
+      <div id="book-submit-err" style="font-size:12px;color:#c0392b;margin-bottom:8px;display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-secondary" onclick="bookGoStep(2)">← Back</button>
+        <button class="btn btn-primary" id="confirm-btn" onclick="confirmBooking()">Confirm Booking</button>
+      </div>
+    </div>
+    <!-- Step 4 Success -->
+    <div id="book-step4" class="card" style="display:none;text-align:center;padding:2.5rem 1.5rem">
+      <div style="width:60px;height:60px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:8px">Booking Confirmed!</h2>
+      <p id="success-msg" style="font-size:14px;color:#555;margin-bottom:6px;line-height:1.6"></p>
+      <div id="success-ref" style="display:inline-block;background:#f3f4f6;border-radius:8px;padding:8px 18px;font-size:13px;margin-bottom:20px;font-family:monospace;letter-spacing:1px"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="goPage('mybookings')">View My Bookings</button>
+        <button class="btn btn-primary" onclick="bookAnother()">Book Another Test</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MY BOOKINGS PAGE ==================== -->
+<div id="page-mybookings" class="page" style="max-width:700px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:14px">My Bookings</h2>
+  <div class="card" style="margin-bottom:14px">
+    <p style="font-size:13px;color:#555;margin-bottom:10px">Enter your registered mobile number to view all bookings</p>
+    <div style="display:flex;gap:8px">
+      <input class="inp" id="mybk-phone" placeholder="Enter mobile number (+91 or 10-digit)" style="flex:1" onkeyup="if(event.key==='Enter')searchMyBookings()">
+      <button class="btn btn-primary" onclick="searchMyBookings()">Search</button>
+    </div>
+    <span class="form-err" id="mybk-err" style="margin-top:6px">Please enter a valid mobile number</span>
+  </div>
+  <div id="mybk-list"></div>
+</div>
+
+<!-- ==================== ADMIN PAGE ==================== -->
+<div id="page-admin" class="page">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:14px">Admin Panel</h2>
+  <div class="toast" id="admin-toast"></div>
+  <div style="display:flex;gap:2px;border-bottom:2px solid #eee;margin-bottom:18px">
+    <button class="btn" id="atab-labs" onclick="adminTab('labs')" style="border:none;border-bottom:3px solid #1D9E75;border-radius:0;color:#1D9E75;padding:9px 18px;margin-bottom:-2px;font-weight:600;background:none">Labs</button>
+    <button class="btn" id="atab-tests" onclick="adminTab('tests')" style="border:none;border-bottom:3px solid transparent;border-radius:0;color:#aaa;padding:9px 18px;margin-bottom:-2px;background:none">Tests</button>
+    <button class="btn" id="atab-prices" onclick="adminTab('prices')" style="border:none;border-bottom:3px solid transparent;border-radius:0;color:#aaa;padding:9px 18px;margin-bottom:-2px;background:none">Prices</button>
+    <button class="btn" id="atab-bookings" onclick="adminTab('bookings')" style="border:none;border-bottom:3px solid transparent;border-radius:0;color:#aaa;padding:9px 18px;margin-bottom:-2px;background:none">Bookings</button>
+  </div>
+
+  <!-- Admin Labs -->
+  <div id="admin-labs">
+    <div class="card" style="margin-bottom:14px">
+      <p style="font-weight:600;margin-bottom:12px" id="lab-form-heading">Add New Lab</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px" class="grid-3">
+        <input class="inp" id="lf-name" placeholder="Lab name *">
+        <input class="inp" id="lf-city" placeholder="City *">
+        <input class="inp" id="lf-accred" placeholder="Accreditation (e.g. NABL)">
+        <input class="inp" id="lf-addr" placeholder="Address">
+        <input class="inp" id="lf-phone" placeholder="Contact phone">
+        <input class="inp" id="lf-rating" type="number" step="0.1" min="1" max="5" placeholder="Rating 1.0-5.0">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="lf-home" checked> Home collection available</label>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" id="lf-cancel-btn" style="display:none" onclick="cancelLabEdit()">Cancel Edit</button>
+          <button class="btn btn-primary btn-sm" onclick="saveLab()">Save Lab</button>
+        </div>
+      </div>
+      <div class="form-err" id="lf-err" style="margin-top:8px"></div>
+    </div>
+    <div class="card" style="overflow:auto"><table id="labs-table"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- Admin Tests -->
+  <div id="admin-tests" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <p style="font-weight:600;margin-bottom:12px">Add New Test</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px" class="grid-2">
+        <input class="inp" id="tf-name" placeholder="Test name *">
+        <input class="inp" id="tf-cat" placeholder="Category * (e.g. Blood, Thyroid)">
+      </div>
+      <input class="inp" id="tf-desc" placeholder="Description" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span></span>
+        <button class="btn btn-primary btn-sm" onclick="saveTest()">Add Test</button>
+      </div>
+      <div class="form-err" id="tf-err" style="margin-top:8px"></div>
+    </div>
+    <div class="card" style="overflow:auto"><table id="tests-table"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- Admin Prices -->
+  <div id="admin-prices" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <p style="font-weight:600;margin-bottom:12px">Set Lab Price for Test</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px" class="grid-2">
+        <select class="inp" id="pf-lab"><option value="">Select Lab *</option></select>
+        <select class="inp" id="pf-test"><option value="">Select Test *</option></select>
+        <input class="inp" id="pf-price" type="number" min="1" placeholder="Price (₹) *">
+        <input class="inp" id="pf-disc" type="number" min="0" max="100" placeholder="Discount % (0-100)">
+        <input class="inp" id="pf-dur" placeholder="Report time (e.g. Same Day, 4 Hours)">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:#888">If price already exists for this lab+test, it will be updated.</span>
+        <button class="btn btn-primary btn-sm" onclick="savePrice()">Save Price</button>
+      </div>
+      <div class="form-err" id="pf-err" style="margin-top:8px"></div>
+    </div>
+    <div class="card" style="overflow:auto"><table id="prices-table"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- Admin Bookings -->
+  <div id="admin-bookings" style="display:none">
+    <div class="card" style="overflow:auto"><table id="bookings-table"><thead></thead><tbody></tbody></table></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA - matches exactly what was tested
+// ============================================================
+let labs = [
+  {id:1,name:"Dr Lal PathLabs",city:"Mumbai",address:"Andheri West",phone:"1800-102-5555",rating:4.6,accreditation:"NABL",homeCollection:true},
+  {id:2,name:"SRL Diagnostics",city:"Mumbai",address:"Bandra East",phone:"1800-222-333",rating:4.4,accreditation:"NABL",homeCollection:true},
+  {id:3,name:"Thyrocare",city:"Mumbai",address:"Navi Mumbai",phone:"1800-419-6272",rating:4.3,accreditation:"NABL",homeCollection:true},
+  {id:4,name:"Metropolis",city:"Mumbai",address:"Dadar",phone:"022-3399-3939",rating:4.5,accreditation:"NABL, CAP",homeCollection:true},
+  {id:5,name:"Suburban Diagnostics",city:"Pune",address:"Kothrud",phone:"020-1234-5678",rating:4.2,accreditation:"NABL",homeCollection:true},
+  {id:6,name:"Apollo Diagnostics",city:"Delhi",address:"Connaught Place",phone:"011-4040-4040",rating:4.5,accreditation:"NABL, ISO",homeCollection:true}
+];
+let tests = [
+  {id:1,name:"Complete Blood Count (CBC)",category:"Blood",description:"Evaluates overall blood health and detects disorders"},
+  {id:2,name:"Thyroid Profile (T3/T4/TSH)",category:"Thyroid",description:"Checks thyroid hormone levels"},
+  {id:3,name:"Liver Function Test (LFT)",category:"Liver",description:"Assesses liver health and function"},
+  {id:4,name:"Lipid Profile",category:"Cardiac",description:"Measures cholesterol and triglycerides"},
+  {id:5,name:"HbA1c (Diabetes)",category:"Diabetes",description:"3-month average blood sugar indicator"},
+  {id:6,name:"Vitamin D",category:"Vitamins",description:"Checks vitamin D levels in blood"},
+  {id:7,name:"Kidney Function Test (KFT)",category:"Kidney",description:"Evaluates kidney health"},
+  {id:8,name:"Urine Routine",category:"Urine",description:"Basic urine analysis"},
+  {id:9,name:"Dengue NS1 Antigen",category:"Infection",description:"Early detection of dengue fever"},
+  {id:10,name:"COVID-19 RT-PCR",category:"Infection",description:"Detects active COVID-19 infection"}
+];
+let prices = [
+  {id:1,labId:1,testId:1,price:350,discount:0,reportDuration:"Same Day"},
+  {id:2,labId:2,testId:1,price:320,discount:5,reportDuration:"Same Day"},
+  {id:3,labId:3,testId:1,price:299,discount:10,reportDuration:"Next Day"},
+  {id:4,labId:4,testId:1,price:380,discount:0,reportDuration:"Same Day"},
+  {id:5,labId:5,testId:1,price:310,discount:0,reportDuration:"Same Day"},
+  {id:6,labId:1,testId:2,price:650,discount:0,reportDuration:"Same Day"},
+  {id:7,labId:2,testId:2,price:580,discount:0,reportDuration:"Same Day"},
+  {id:8,labId:3,testId:2,price:499,discount:10,reportDuration:"Next Day"},
+  {id:9,labId:4,testId:2,price:700,discount:5,reportDuration:"Same Day"},
+  {id:10,labId:1,testId:3,price:900,discount:0,reportDuration:"Same Day"},
+  {id:11,labId:2,testId:3,price:850,discount:0,reportDuration:"Same Day"},
+  {id:12,labId:3,testId:3,price:749,discount:0,reportDuration:"Next Day"},
+  {id:13,labId:4,testId:3,price:950,discount:10,reportDuration:"Same Day"},
+  {id:14,labId:5,testId:3,price:780,discount:0,reportDuration:"Same Day"},
+  {id:15,labId:1,testId:4,price:700,discount:0,reportDuration:"Same Day"},
+  {id:16,labId:2,testId:4,price:650,discount:5,reportDuration:"Same Day"},
+  {id:17,labId:3,testId:4,price:599,discount:10,reportDuration:"Next Day"},
+  {id:18,labId:1,testId:5,price:500,discount:0,reportDuration:"Same Day"},
+  {id:19,labId:2,testId:5,price:450,discount:0,reportDuration:"Same Day"},
+  {id:20,labId:3,testId:5,price:399,discount:10,reportDuration:"Next Day"},
+  {id:21,labId:4,testId:5,price:550,discount:0,reportDuration:"Same Day"},
+  {id:22,labId:1,testId:6,price:1200,discount:0,reportDuration:"Same Day"},
+  {id:23,labId:2,testId:6,price:999,discount:0,reportDuration:"Same Day"},
+  {id:24,labId:3,testId:6,price:899,discount:10,reportDuration:"Next Day"},
+  {id:25,labId:1,testId:7,price:800,discount:0,reportDuration:"Same Day"},
+  {id:26,labId:2,testId:7,price:750,discount:5,reportDuration:"Same Day"},
+  {id:27,labId:3,testId:7,price:649,discount:0,reportDuration:"Next Day"},
+  {id:28,labId:1,testId:8,price:250,discount:0,reportDuration:"Same Day"},
+  {id:29,labId:2,testId:8,price:230,discount:0,reportDuration:"Same Day"},
+  {id:30,labId:3,testId:8,price:199,discount:0,reportDuration:"Next Day"},
+  {id:31,labId:1,testId:9,price:900,discount:0,reportDuration:"Same Day"},
+  {id:32,labId:2,testId:9,price:850,discount:0,reportDuration:"4 Hours"},
+  {id:33,labId:4,testId:9,price:950,discount:5,reportDuration:"Same Day"},
+  {id:34,labId:1,testId:10,price:500,discount:0,reportDuration:"24 Hours"},
+  {id:35,labId:2,testId:10,price:450,discount:10,reportDuration:"24 Hours"},
+  {id:36,labId:4,testId:10,price:480,discount:0,reportDuration:"12 Hours"}
+];
+let bookings = [];
+let nextLabId=7, nextTestId=11, nextPriceId=37;
+
+// ============================================================
+// CORE FUNCTIONS - same logic as test suite
+// ============================================================
+function effectivePrice(p) { return Math.round(p.price * (1 - p.discount/100)); }
+
+function normalizePhone(p) {
+  if(!p) return '';
+  let c = p.toString().replace(/\D/g,'');
+  if(c.startsWith('91') && c.length===12) c = c.slice(2);
+  if(c.startsWith('0') && c.length===11) c = c.slice(1);
+  return c;
+}
+
+function validatePhone(p) { const n=normalizePhone(p); return n.length===10; }
+
+function validateEmail(e) {
+  if(!e||e.trim()==='') return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+}
+
+function validateRating(r) { const n=parseFloat(r); return !isNaN(n)&&n>=1&&n<=5; }
+
+function getCategories() { return ['All',...new Set(tests.map(t=>t.category))]; }
+
+function searchTests(query, category) {
+  return tests.filter(t=>{
+    const matchCat = !category||category==='All'||t.category===category;
+    const matchQ = !query||t.name.toLowerCase().includes(query.toLowerCase())||t.category.toLowerCase().includes(query.toLowerCase());
+    return matchCat && matchQ;
+  });
+}
+
+function getPricesForTest(testId, city, sortBy) {
+  let result = prices.filter(p=>p.testId===testId);
+  if(city&&city.trim()!=='') {
+    const c=city.toLowerCase();
+    result = result.filter(p=>{ const l=labs.find(x=>x.id===p.labId); return l&&l.city.toLowerCase().includes(c); });
+  }
+  const sortFn = {
+    'price-asc': (a,b)=>effectivePrice(a)-effectivePrice(b),
+    'price-desc': (a,b)=>effectivePrice(b)-effectivePrice(a),
+    'rating': (a,b)=>{ const la=labs.find(x=>x.id===a.labId),lb=labs.find(x=>x.id===b.labId); return (lb?lb.rating:0)-(la?la.rating:0); },
+    'name': (a,b)=>{ const la=labs.find(x=>x.id===a.labId),lb=labs.find(x=>x.id===b.labId); return (la?la.name:'').localeCompare(lb?lb.name:''); }
+  };
+  return result.sort(sortFn[sortBy]||sortFn['price-asc']);
+}
+
+function initials(name) { return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+function formatDate(dateStr) {
+  const d=new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function stars(r) {
+  let s='';
+  for(let i=1;i<=5;i++) s+=`<span style="color:${i<=Math.round(r)?'#BA7517':'#ddd'};font-size:12px">★</span>`;
+  return s;
+}
+
+function generateRef() { return 'LC'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).substring(2,5).toUpperCase(); }
+
+// ============================================================
+// STATE
+// ============================================================
+let selectedTestId = 1;
+let selectedCategory = 'All';
+let selectedPriceEntry = null;
+let bookCollectionType = 'HOME';
+let bookPaymentMethod = 'UPI';
+let bookSelectedDate = '';
+let bookSelectedSlot = '';
+let editingLabId = null;
+let mybookingsSearched = false;
+
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
+function goPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nl').forEach(b=>b.classList.remove('on'));
+  document.getElementById('page-'+page).classList.add('on');
+  const nav = document.getElementById('nav-'+page);
+  if(nav) nav.classList.add('on');
+  if(page==='admin') { adminTab('labs'); refreshAdminSelects(); }
+}
+
+// ============================================================
+// SEARCH PAGE
+// ============================================================
+function onSearchInput() { renderTestList(); }
+
+function renderCategoryChips() {
+  const cats = getCategories();
+  document.getElementById('cat-chips').innerHTML = cats.map(c=>
+    `<button class="chip${c===selectedCategory?' on':''}" onclick="selectCategory('${c}')">${c}</button>`
+  ).join('');
+}
+
+function selectCategory(cat) { selectedCategory=cat; renderTestList(); }
+
+function renderTestList() {
+  const q = document.getElementById('search-q').value;
+  const filtered = searchTests(q, selectedCategory);
+  document.getElementById('test-count-badge').textContent = filtered.length;
+  renderCategoryChips();
+  if(filtered.length && !filtered.find(t=>t.id===selectedTestId)) {
+    selectedTestId = filtered[0].id;
+  }
+  document.getElementById('test-list').innerHTML = filtered.map(t=>`
+    <div onclick="selectTest(${t.id})" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;transition:background .1s;${t.id===selectedTestId?'background:#E1F5EE;border-left:3px solid #1D9E75;padding-left:11px':''}">
+      <div style="font-size:13px;font-weight:${t.id===selectedTestId?'600':'400'};color:${t.id===selectedTestId?'#085041':'#222'};margin-bottom:3px">${t.name}</div>
+      <span class="tag">${t.category}</span>
+    </div>`).join('') || `<div class="empty-state" style="padding:1.5rem;font-size:13px">No tests found</div>`;
+  renderPriceList();
+}
+
+function selectTest(id) { selectedTestId=id; renderTestList(); }
+
+function renderPriceList() {
+  const city = document.getElementById('search-city').value;
+  const sortBy = document.getElementById('search-sort').value;
+  const ps = getPricesForTest(selectedTestId, city, sortBy);
+  const lowest = ps.length ? Math.min(...ps.map(p=>effectivePrice(p))) : 0;
+  document.getElementById('price-result-info').textContent = ps.length ? `${ps.length} lab${ps.length!==1?'s':''} available` : '';
+  document.getElementById('price-list').innerHTML = ps.map(p=>{
+    const lab = labs.find(l=>l.id===p.labId);
+    if(!lab) return '';
+    const ep = effectivePrice(p);
+    const best = ep===lowest;
+    return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;${best?'border:2px solid #9FE1CB;background:#f7fef9':''}">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+        <div style="width:44px;height:44px;border-radius:10px;background:#E1F5EE;border:1px solid #9FE1CB;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#085041;flex-shrink:0">${initials(lab.name)}</div>
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:600;font-size:14px">${lab.name}</span>
+            ${best?'<span class="badge-best">Lowest Price</span>':''}
+            <span class="tag">${lab.accreditation}</span>
+          </div>
+          <div style="font-size:12px;color:#888;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span>${stars(lab.rating)} ${lab.rating}</span>
+            <span>•</span><span>${lab.city}</span>
+            <span>•</span><span>${p.reportDuration}</span>
+            ${lab.homeCollection?'<span>•</span><span style="color:#1D9E75">Home collection</span>':''}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:700;color:${best?'#0F6E56':'#1a1a1a'}">₹${ep.toLocaleString('en-IN')}</div>
+          ${p.discount>0?`<div style="font-size:12px;color:#bbb;text-decoration:line-through">₹${p.price.toLocaleString('en-IN')}</div><div style="font-size:11px;color:#0F6E56;font-weight:600">${p.discount}% off</div>`:''}
+        </div>
+        <button class="btn btn-primary" onclick="openBooking(${p.id})">Book Now</button>
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty-state"><p>No labs found for this test${city?' in '+city:''}.</p></div>`;
+}
+
+// ============================================================
+// BOOKING
+// ============================================================
+function openBooking(priceId) {
+  selectedPriceEntry = prices.find(p=>p.id===priceId);
+  if(!selectedPriceEntry) return;
+  const lab = labs.find(l=>l.id===selectedPriceEntry.labId);
+  const test = tests.find(t=>t.id===selectedPriceEntry.testId);
+  const ep = effectivePrice(selectedPriceEntry);
+  document.getElementById('book-banner').style.display='block';
+  document.getElementById('book-banner').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:700;color:#085041;font-size:15px">${test.name}</div>
+        <div style="font-size:13px;color:#0F6E56;margin-top:3px">${lab.name} &nbsp;•&nbsp; ${lab.city} &nbsp;•&nbsp; ${lab.accreditation}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:24px;font-weight:700;color:#0F6E56">₹${ep.toLocaleString('en-IN')}</div>
+        ${selectedPriceEntry.discount>0?`<div style="font-size:12px;color:#0F6E56">${selectedPriceEntry.discount}% discount applied</div>`:''}
+      </div>
+    </div>`;
+  document.getElementById('book-no-selection').style.display='none';
+  document.getElementById('book-form-wrap').style.display='block';
+  // Reset form
+  ['b-name','b-age','b-phone','b-email','b-addr'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.form-err').forEach(e=>{e.classList.remove('show');});
+  document.querySelectorAll('.inp.invalid').forEach(e=>e.classList.remove('invalid'));
+  bookCollectionType='HOME'; bookPaymentMethod='UPI'; bookSelectedDate=''; bookSelectedSlot='';
+  selectCollection('HOME'); selectPayment('UPI');
+  buildDateGrid(); buildTimeGrid();
+  bookGoStep(1);
+  goPage('book');
+}
+
+function bookAnother() {
+  selectedPriceEntry=null;
+  document.getElementById('book-banner').style.display='none';
+  document.getElementById('book-no-selection').style.display='block';
+  document.getElementById('book-form-wrap').style.display='none';
+}
+
+function bookGoStep(n) {
+  [1,2,3,4].forEach(i=>{
+    const el=document.getElementById('book-step'+i);
+    if(el) el.style.display=i===n?'block':'none';
+  });
+  const states = n===1?['active','idle','idle']:n===2?['done','active','idle']:['done','done','active'];
+  ['sd1','sd2','sd3'].forEach((id,i)=>{
+    const d=document.getElementById(id),l=document.getElementById('sl'+(i+1));
+    const s=states[i];
+    d.className='step-dot '+s;
+    d.textContent=s==='done'?'✓':(i+1);
+    l.className='step-label '+s;
+  });
+  document.getElementById('sline1').className='step-line'+(states[0]==='done'?' done':'');
+  document.getElementById('sline2').className='step-line'+(states[1]==='done'?' done':'');
+}
+
+function selectCollection(type) {
+  bookCollectionType=type;
+  ['HOME','LAB'].forEach(t=>document.getElementById('col-'+t).className='slt'+(t===type?' on':''));
+  document.getElementById('addr-group').style.display=type==='HOME'?'flex':'none';
+}
+
+function selectPayment(method) {
+  bookPaymentMethod=method;
+  ['UPI','CARD','CASH'].forEach(m=>document.getElementById('pay-'+m).className='slt'+(m===method?' on':''));
+}
+
+function showFieldError(fieldId, errId, show) {
+  const f=document.getElementById(fieldId), e=document.getElementById(errId);
+  if(f){ if(show) f.classList.add('invalid'); else f.classList.remove('invalid'); }
+  if(e){ if(show) e.classList.add('show'); else e.classList.remove('show'); }
+}
+
+function bookNext1() {
+  let hasError=false;
+  const name=document.getElementById('b-name').value.trim();
+  const phone=document.getElementById('b-phone').value.trim();
+  const email=document.getElementById('b-email').value.trim();
+  const addr=document.getElementById('b-addr').value.trim();
+  showFieldError('b-name','err-name',!name); if(!name) hasError=true;
+  showFieldError('b-phone','err-phone',!validatePhone(phone)); if(!validatePhone(phone)) hasError=true;
+  showFieldError('b-email','err-email',!validateEmail(email)); if(!validateEmail(email)) hasError=true;
+  if(bookCollectionType==='HOME') { showFieldError('b-addr','err-addr',!addr); if(!addr) hasError=true; }
+  else { showFieldError('b-addr','err-addr',false); }
+  if(!hasError) bookGoStep(2);
+}
+
+function buildDateGrid() {
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html='';
+  for(let i=1;i<=10;i++){
+    const d=new Date(); d.setDate(d.getDate()+i);
+    const v=d.toISOString().split('T')[0];
+    html+=`<div class="slt${v===bookSelectedDate?' on':''}" onclick="selectDate('${v}')" style="padding:8px 4px;text-align:center">
+      <div style="font-size:11px;color:#888">${days[d.getDay()]}</div>
+      <div style="font-size:15px;font-weight:600;margin:2px 0">${d.getDate()}</div>
+      <div style="font-size:11px;color:#888">${months[d.getMonth()]}</div>
+    </div>`;
+  }
+  document.getElementById('date-grid').innerHTML=html;
+}
+
+function buildTimeGrid() {
+  const slots=['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM'];
+  document.getElementById('time-grid').innerHTML=slots.map(s=>
+    `<div class="slt${s===bookSelectedSlot?' on':''}" onclick="selectSlot('${s}')">${s}</div>`
+  ).join('');
+}
+
+function selectDate(v) { bookSelectedDate=v; buildDateGrid(); showFieldError(null,'err-date',false); }
+function selectSlot(s) { bookSelectedSlot=s; buildTimeGrid(); showFieldError(null,'err-slot',false); }
+
+function bookNext2() {
+  let hasError=false;
+  if(!bookSelectedDate) { document.getElementById('err-date').classList.add('show'); hasError=true; }
+  if(!bookSelectedSlot) { document.getElementById('err-slot').classList.add('show'); hasError=true; }
+  if(hasError) return;
+  // Build summary
+  const lab=labs.find(l=>l.id===selectedPriceEntry.labId);
+  const test=tests.find(t=>t.id===selectedPriceEntry.testId);
+  const ep=effectivePrice(selectedPriceEntry);
+  const fee=bookCollectionType==='HOME'?50:0;
+  const total=ep+fee;
+  const payLabels={UPI:'UPI',CARD:'Card / Net Banking',CASH:'Pay at Lab'};
+  document.getElementById('book-summary').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:0">
+      ${row('Patient', document.getElementById('b-name').value+(document.getElementById('b-age').value?' (Age '+document.getElementById('b-age').value+')':''))}
+      ${row('Phone', normalizePhone(document.getElementById('b-phone').value))}
+      ${document.getElementById('b-email').value?row('Email',document.getElementById('b-email').value):''}
+      ${row('Test', test.name)}
+      ${row('Lab', lab.name+', '+lab.city)}
+      ${row('Appointment', formatDate(bookSelectedDate)+' at '+bookSelectedSlot)}
+      ${row('Collection', bookCollectionType==='HOME'?'Home - '+document.getElementById('b-addr').value:'Visit Lab - '+lab.name+', '+lab.address)}
+      <div style="border-top:1px solid #eee;margin:10px 0"></div>
+      ${row('Test fee','₹'+ep.toLocaleString('en-IN'))}
+      ${fee?row('Home collection fee','₹'+fee):''}
+      <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-weight:700;font-size:15px"><span>Total amount</span><span style="color:#0F6E56">₹${total.toLocaleString('en-IN')}</span></div>
+    </div>`;
+  bookGoStep(3);
+}
+
+function row(label,val){return`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;gap:12px"><span style="color:#666;flex-shrink:0">${label}</span><span style="text-align:right">${val}</span></div>`;}
+
+function confirmBooking() {
+  const btn=document.getElementById('confirm-btn');
+  btn.disabled=true; btn.textContent='Confirming...';
+  const phone=normalizePhone(document.getElementById('b-phone').value);
+  const ep=effectivePrice(selectedPriceEntry);
+  const fee=bookCollectionType==='HOME'?50:0;
+  // Duplicate check
+  const dup=bookings.find(b=>b.phone===phone&&b.testId===selectedPriceEntry.testId&&b.appointmentDate===bookSelectedDate&&b.status==='CONFIRMED');
+  if(dup){
+    document.getElementById('book-submit-err').textContent='You already have a confirmed booking for this test on this date. Please select a different date.';
+    document.getElementById('book-submit-err').style.display='block';
+    btn.disabled=false; btn.textContent='Confirm Booking';
+    return;
+  }
+  const lab=labs.find(l=>l.id===selectedPriceEntry.labId);
+  const test=tests.find(t=>t.id===selectedPriceEntry.testId);
+  const booking={
+    id:bookings.length+1,
+    bookingRef:generateRef(),
+    patientName:document.getElementById('b-name').value.trim(),
+    patientAge:document.getElementById('b-age').value?parseInt(document.getElementById('b-age').value):null,
+    phone,
+    email:document.getElementById('b-email').value.trim(),
+    labId:selectedPriceEntry.labId, testId:selectedPriceEntry.testId,
+    labName:lab.name, testName:test.name,
+    testPrice:ep, collectionFee:fee, totalAmount:ep+fee,
+    collectionType:bookCollectionType,
+    collectionAddress:document.getElementById('b-addr').value.trim(),
+    appointmentDate:bookSelectedDate, appointmentSlot:bookSelectedSlot,
+    paymentMethod:bookPaymentMethod,
+    status:'CONFIRMED',
+    createdAt:new Date().toLocaleString('en-IN')
+  };
+  bookings.push(booking);
+  document.getElementById('book-submit-err').style.display='none';
+  document.getElementById('success-msg').textContent=`Your ${test.name} at ${lab.name} is booked for ${formatDate(bookSelectedDate)} at ${bookSelectedSlot}.`;
+  document.getElementById('success-ref').textContent='Booking ID: '+booking.bookingRef;
+  btn.disabled=false; btn.textContent='Confirm Booking';
+  bookGoStep(4);
+}
+
+// ============================================================
+// MY BOOKINGS
+// ============================================================
+function searchMyBookings() {
+  const raw=document.getElementById('mybk-phone').value.trim();
+  const err=document.getElementById('mybk-err');
+  if(!raw){err.textContent='Please enter your mobile number';err.classList.add('show');return;}
+  if(!validatePhone(raw)){err.textContent='Please enter a valid 10-digit mobile number';err.classList.add('show');return;}
+  err.classList.remove('show');
+  mybookingsSearched=true;
+  const phone=normalizePhone(raw);
+  const found=bookings.filter(b=>b.phone===phone);
+  renderMyBookings(found);
+}
+
+function renderMyBookings(found) {
+  if(!mybookingsSearched){ document.getElementById('mybk-list').innerHTML=''; return; }
+  if(!found.length){
+    document.getElementById('mybk-list').innerHTML=`<div class="empty-state"><p>No bookings found for this number.</p><p style="font-size:12px;margin-top:8px">Make sure you enter the same number used during booking.</p></div>`;
+    return;
+  }
+  document.getElementById('mybk-list').innerHTML=found.map(b=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <code style="font-size:13px;letter-spacing:1px">${b.bookingRef}</code>
+          <div style="font-size:11px;color:#aaa;margin-top:4px">Booked on ${b.createdAt}</div>
+        </div>
+        <span class="${b.status==='CONFIRMED'?'badge-confirmed':'badge-cancelled'}">${b.status}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:110px 1fr;gap:5px 12px;font-size:13px;margin-bottom:12px">
+        <span style="color:#888">Test</span><span style="font-weight:600">${b.testName}</span>
+        <span style="color:#888">Lab</span><span>${b.labName}</span>
+        <span style="color:#888">Appointment</span><span>${formatDate(b.appointmentDate)} at ${b.appointmentSlot}</span>
+        <span style="color:#888">Collection</span><span>${b.collectionType==='HOME'?'Home - '+b.collectionAddress:'Visit Lab'}</span>
+        <span style="color:#888">Payment</span><span>${b.paymentMethod}</span>
+        <span style="color:#888;font-weight:600">Total</span><span style="font-weight:700;color:#0F6E56;font-size:15px">₹${b.totalAmount.toLocaleString('en-IN')}</span>
+      </div>
+      ${b.status==='CONFIRMED'?`<div style="border-top:1px solid #eee;padding-top:12px"><button class="btn btn-danger btn-sm" onclick="cancelMyBooking('${b.bookingRef}')">Cancel Booking</button></div>`:''}
+    </div>`).join('');
+}
+
+function cancelMyBooking(ref) {
+  if(!confirm('Are you sure you want to cancel this booking?')) return;
+  const b=bookings.find(x=>x.bookingRef===ref);
+  if(b) b.status='CANCELLED';
+  const phone=normalizePhone(document.getElementById('mybk-phone').value);
+  renderMyBookings(bookings.filter(b=>b.phone===phone));
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+let currentAdminTab='labs';
+function adminTab(tab) {
+  currentAdminTab=tab;
+  ['labs','tests','prices','bookings'].forEach(t=>{
+    document.getElementById('admin-'+t).style.display=t===tab?'block':'none';
+    const btn=document.getElementById('atab-'+t);
+    btn.style.borderBottomColor=t===tab?'#1D9E75':'transparent';
+    btn.style.color=t===tab?'#1D9E75':'#aaa';
+    btn.style.fontWeight=t===tab?'600':'400';
+  });
+  if(tab==='labs') renderLabsTable();
+  if(tab==='tests') renderTestsTable();
+  if(tab==='prices'){renderPricesTable();refreshAdminSelects();}
+  if(tab==='bookings') renderBookingsTable();
+}
+
+function showAdminToast(msg,type='success'){
+  const t=document.getElementById('admin-toast');
+  t.textContent=msg; t.className='toast '+type; t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
+}
+
+function refreshAdminSelects(){
+  document.getElementById('pf-lab').innerHTML='<option value="">Select Lab *</option>'+labs.map(l=>`<option value="${l.id}">${l.name} (${l.city})</option>`).join('');
+  document.getElementById('pf-test').innerHTML='<option value="">Select Test *</option>'+tests.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+}
+
+// --- Labs Table ---
+function renderLabsTable(){
+  const t=document.getElementById('labs-table');
+  t.innerHTML=`<thead><tr><th>Lab Name</th><th>City</th><th>Rating</th><th>Accreditation</th><th>Home</th><th>Actions</th></tr></thead><tbody>${
+    labs.map(l=>`<tr>
+      <td><strong>${l.name}</strong><div style="font-size:11px;color:#aaa;margin-top:2px">${l.address}</div></td>
+      <td>${l.city}</td><td>⭐ ${l.rating}</td><td>${l.accreditation}</td>
+      <td style="color:${l.homeCollection?'#0F6E56':'#aaa'}">${l.homeCollection?'Yes':'No'}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-sm" style="background:#E6F1FB;color:#0C447C;border-color:#B5D4F4" onclick="startEditLab(${l.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteLab(${l.id})">Delete</button>
+      </div></td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:2rem;color:#aaa">No labs added</td></tr>'
+  }</tbody>`;
+}
+
+function startEditLab(id){
+  editingLabId=id;
+  const l=labs.find(x=>x.id===id); if(!l) return;
+  document.getElementById('lf-name').value=l.name;
+  document.getElementById('lf-city').value=l.city;
+  document.getElementById('lf-addr').value=l.address||'';
+  document.getElementById('lf-phone').value=l.phone||'';
+  document.getElementById('lf-rating').value=l.rating||'';
+  document.getElementById('lf-accred').value=l.accreditation||'';
+  document.getElementById('lf-home').checked=l.homeCollection;
+  document.getElementById('lab-form-heading').textContent='Edit Lab - '+l.name;
+  document.getElementById('lf-cancel-btn').style.display='inline-block';
+  document.getElementById('lf-err').classList.remove('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelLabEdit(){
+  editingLabId=null;
+  ['lf-name','lf-city','lf-addr','lf-phone','lf-rating','lf-accred'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lf-home').checked=true;
+  document.getElementById('lab-form-heading').textContent='Add New Lab';
+  document.getElementById('lf-cancel-btn').style.display='none';
+  document.getElementById('lf-err').classList.remove('show');
+}
+
+function saveLab(){
+  const name=document.getElementById('lf-name').value.trim();
+  const city=document.getElementById('lf-city').value.trim();
+  const ratingRaw=document.getElementById('lf-rating').value;
+  const err=document.getElementById('lf-err');
+  const errors=[];
+  if(!name) errors.push('Lab name is required');
+  if(!city) errors.push('City is required');
+  if(ratingRaw!==''&&!validateRating(ratingRaw)) errors.push('Rating must be between 1.0 and 5.0');
+  if(errors.length){err.textContent=errors.join(' • ');err.classList.add('show');return;}
+  err.classList.remove('show');
+  const data={name,city,address:document.getElementById('lf-addr').value.trim(),phone:document.getElementById('lf-phone').value.trim(),rating:ratingRaw!==''?parseFloat(ratingRaw):4.0,accreditation:document.getElementById('lf-accred').value.trim()||'NABL',homeCollection:document.getElementById('lf-home').checked};
+  if(editingLabId){
+    const l=labs.find(x=>x.id===editingLabId);
+    if(l){Object.assign(l,data);}
+    cancelLabEdit();
+    showAdminToast('Lab updated successfully');
+  } else {
+    labs.push({id:nextLabId++,...data});
+    cancelLabEdit();
+    showAdminToast('Lab added successfully');
+  }
+  renderLabsTable(); refreshAdminSelects(); renderTestList(); renderPriceList();
+}
+
+function deleteLab(id){
+  if(!confirm('Delete this lab? All prices for this lab will also be removed.')) return;
+  labs=labs.filter(l=>l.id!==id);
+  prices=prices.filter(p=>p.labId!==id);
+  renderLabsTable(); refreshAdminSelects(); renderPriceList();
+  showAdminToast('Lab deleted');
+}
+
+// --- Tests Table ---
+function renderTestsTable(){
+  document.getElementById('tests-table').innerHTML=`<thead><tr><th>Test Name</th><th>Category</th><th>Description</th><th>Actions</th></tr></thead><tbody>${
+    tests.map(t=>`<tr>
+      <td><strong>${t.name}</strong></td>
+      <td><span class="tag">${t.category}</span></td>
+      <td style="color:#888;max-width:250px">${t.description}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteTest(${t.id})">Delete</button></td>
+    </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;padding:2rem;color:#aaa">No tests added</td></tr>'
+  }</tbody>`;
+}
+
+function saveTest(){
+  const name=document.getElementById('tf-name').value.trim();
+  const cat=document.getElementById('tf-cat').value.trim();
+  const err=document.getElementById('tf-err');
+  const errors=[];
+  if(!name) errors.push('Test name is required');
+  if(!cat) errors.push('Category is required');
+  if(errors.length){err.textContent=errors.join(' • ');err.classList.add('show');return;}
+  err.classList.remove('show');
+  tests.push({id:nextTestId++,name,category:cat,description:document.getElementById('tf-desc').value.trim()});
+  ['tf-name','tf-cat','tf-desc'].forEach(id=>document.getElementById(id).value='');
+  renderTestsTable(); renderCategoryChips(); renderTestList(); refreshAdminSelects();
+  showAdminToast('Test added successfully');
+}
+
+function deleteTest(id){
+  if(!confirm('Delete this test? All prices for this test will also be removed.')) return;
+  tests=tests.filter(t=>t.id!==id);
+  prices=prices.filter(p=>p.testId!==id);
+  renderTestsTable(); renderCategoryChips(); renderTestList(); refreshAdminSelects();
+  showAdminToast('Test deleted');
+}
+
+// --- Prices Table ---
+function renderPricesTable(){
+  document.getElementById('prices-table').innerHTML=`<thead><tr><th>Lab</th><th>Test</th><th>MRP</th><th>Discount</th><th>Effective Price</th><th>Report Time</th><th>Actions</th></tr></thead><tbody>${
+    prices.map(p=>{
+      const l=labs.find(x=>x.id===p.labId),t=tests.find(x=>x.id===p.testId);
+      return`<tr>
+        <td>${l?l.name:'-'}</td><td>${t?t.name:'-'}</td>
+        <td>₹${p.price.toLocaleString('en-IN')}</td><td>${p.discount}%</td>
+        <td><strong style="color:#0F6E56">₹${effectivePrice(p).toLocaleString('en-IN')}</strong></td>
+        <td>${p.reportDuration}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deletePrice(${p.id})">Delete</button></td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:#aaa">No prices set</td></tr>'
+  }</tbody>`;
+}
+
+function savePrice(){
+  const labId=parseInt(document.getElementById('pf-lab').value);
+  const testId=parseInt(document.getElementById('pf-test').value);
+  const priceVal=parseFloat(document.getElementById('pf-price').value);
+  const discVal=parseFloat(document.getElementById('pf-disc').value)||0;
+  const dur=document.getElementById('pf-dur').value.trim()||'Same Day';
+  const err=document.getElementById('pf-err');
+  const errors=[];
+  if(!labId) errors.push('Select a lab');
+  if(!testId) errors.push('Select a test');
+  if(!priceVal||priceVal<=0) errors.push('Enter a valid price greater than 0');
+  if(discVal<0||discVal>100) errors.push('Discount must be between 0 and 100');
+  if(errors.length){err.textContent=errors.join(' • ');err.classList.add('show');return;}
+  err.classList.remove('show');
+  const existing=prices.find(p=>p.labId===labId&&p.testId===testId);
+  if(existing){existing.price=priceVal;existing.discount=discVal;existing.reportDuration=dur;showAdminToast('Price updated successfully');}
+  else{prices.push({id:nextPriceId++,labId,testId,price:priceVal,discount:discVal,reportDuration:dur});showAdminToast('Price added successfully');}
+  ['pf-lab','pf-test','pf-price','pf-disc','pf-dur'].forEach(id=>{const el=document.getElementById(id);el.value=el.tagName==='SELECT'?'':''});
+  renderPricesTable(); renderPriceList();
+}
+
+function deletePrice(id){
+  if(!confirm('Delete this price entry?')) return;
+  prices=prices.filter(p=>p.id!==id);
+  renderPricesTable(); renderPriceList();
+  showAdminToast('Price deleted');
+}
+
+// --- Bookings Table ---
+function renderBookingsTable(){
+  document.getElementById('bookings-table').innerHTML=`<thead><tr><th>Booking Ref</th><th>Patient</th><th>Test</th><th>Lab</th><th>Date &amp; Time</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody>${
+    bookings.length?bookings.map(b=>`<tr>
+      <td><code>${b.bookingRef}</code></td>
+      <td>${b.patientName}${b.patientAge?'<br><span style="font-size:11px;color:#aaa">Age '+b.patientAge+'</span>':''}</td>
+      <td>${b.testName}</td><td>${b.labName}</td>
+      <td>${formatDate(b.appointmentDate)}<br><span style="font-size:11px;color:#888">${b.appointmentSlot}</span></td>
+      <td><strong>₹${b.totalAmount.toLocaleString('en-IN')}</strong></td>
+      <td><span class="${b.status==='CONFIRMED'?'badge-confirmed':'badge-cancelled'}">${b.status}</span></td>
+      <td>${b.status==='CONFIRMED'?`<button class="btn btn-danger btn-sm" onclick="adminCancelBooking('${b.bookingRef}')">Cancel</button>`:''}</td>
+    </tr>`).join(''):'<tr><td colspan="8" style="text-align:center;padding:2rem;color:#aaa">No bookings yet</td></tr>'
+  }</tbody>`;
+}
+
+function adminCancelBooking(ref){
+  if(!confirm('Cancel this booking?')) return;
+  const b=bookings.find(x=>x.bookingRef===ref);
+  if(b){b.status='CANCELLED';renderBookingsTable();showAdminToast('Booking cancelled');}
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('book-no-selection').style.display='block';
+document.getElementById('book-form-wrap').style.display='none';
+mybookingsSearched=false;
+renderCategoryChips();
+renderTestList();
+</script>
+</body>
+</html>

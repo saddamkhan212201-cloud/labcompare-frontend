@@ -1,0 +1,55 @@
+<div class="login-page">
+  <div class="login-card">
+    <!-- Brand header -->
+    <div class="login-header">
+      <div class="brand-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        </svg>
+      </div>
+      <h1>LabCompare</h1>
+      <p>Lab Test Price Comparison & Booking</p>
+    </div>
+
+    <!-- Tab switch -->
+    <div class="tab-row">
+      <button class="tab-btn" [class.active]="mode==='login'" (click)="switchMode('login')">Login</button>
+      <button class="tab-btn" [class.active]="mode==='register'" (click)="switchMode('register')">Register</button>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+    <div class="alert alert-success" *ngIf="success">{{ success }}</div>
+
+    <!-- Form -->
+    <div class="form-body">
+      <div class="form-group">
+        <label>Username</label>
+        <input [(ngModel)]="username" placeholder="Enter username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input [(ngModel)]="password" type="password" placeholder="Enter password" autocomplete="current-password" />
+      </div>
+      <div class="form-group" *ngIf="mode==='register'">
+        <label>Confirm Password</label>
+        <input [(ngModel)]="confirmPassword" type="password" placeholder="Re-enter password" />
+      </div>
+
+      <button class="submit-btn" (click)="submit()" [disabled]="loading">
+        <span *ngIf="!loading">{{ mode === 'login' ? 'Login' : 'Create Account' }}</span>
+        <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Please wait...</span>
+      </button>
+    </div>
+
+    <!-- Default credentials hint -->
+    <div class="hint-box" *ngIf="mode==='login'">
+      <div class="hint-title">🔑 Default Credentials</div>
+      <div class="hint-row"><span class="role-badge admin">Admin</span> admin / admin123</div>
+      <div class="hint-row"><span class="role-badge user">User</span> user / user123</div>
+    </div>
+
+    <div class="back-link" (click)="mode='login'" *ngIf="false"></div>
+    <a class="back-link" routerLink="/search">← Back to Search</a>
+  </div>
+</div>

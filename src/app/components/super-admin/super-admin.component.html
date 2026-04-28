@@ -1,0 +1,101 @@
+<div class="page-container">
+  <div class="sa-header">
+    <div class="sa-title">
+      <span class="crown">👑</span>
+      <div>
+        <h1>Super Admin Panel</h1>
+        <p class="subtitle">Full system access - {{ auth.getUsername() }}</p>
+      </div>
+    </div>
+    <div class="sa-tabs">
+      <button [class.active]="activeTab==='users'" (click)="activeTab='users'">👥 User Management</button>
+      <button [class.active]="activeTab==='admin-view'" (click)="activeTab='admin-view'">🏥 Admin View</button>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="msg" [class.error]="msgType==='error'">{{ msg }}</div>
+
+  <!-- USER MANAGEMENT TAB -->
+  <div *ngIf="activeTab==='users'">
+
+    <!-- Create User Form -->
+    <div class="card">
+      <h3>Create New User</h3>
+      <div class="form-row">
+        <div class="field">
+          <label>Username</label>
+          <input [(ngModel)]="userForm.username" placeholder="e.g. admin_thyro" />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input [(ngModel)]="userForm.password" type="password" placeholder="Password" />
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select [(ngModel)]="userForm.role">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </div>
+        <div class="field" *ngIf="userForm.role === 'ADMIN'">
+          <label>Assign Lab (optional)</label>
+          <select [(ngModel)]="userForm.adminLabId">
+            <option value="">No restriction (all labs)</option>
+            <option *ngFor="let l of labs" [value]="l.id">{{ l.name }} - {{ l.city }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="createUser()">Create User</button>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+      <h3>All Users <span class="count">{{ users.length }}</span></h3>
+      <table class="sa-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Assigned Lab</th>
+            <th>Change Role</th>
+            <th>Change Lab</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of users">
+            <td class="id-col">{{ u.id }}</td>
+            <td><strong>{{ u.username }}</strong></td>
+            <td><span class="badge" [ngClass]="roleClass(u.role)">{{ u.role }}</span></td>
+            <td>{{ getLabName(u.adminLabId) }}</td>
+            <td>
+              <select (change)="updateRole(u, $any($event.target).value)" [value]="u.role" class="inline-select">
+                <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+              </select>
+            </td>
+            <td>
+              <select *ngIf="u.role === 'ADMIN'" (change)="updateLabId(u, $any($event.target).value)" [value]="u.adminLabId" class="inline-select">
+                <option value="">All labs</option>
+                <option *ngFor="let l of labs" [value]="l.id">{{ l.name }}</option>
+              </select>
+              <span *ngIf="u.role !== 'ADMIN'" class="muted">N/A</span>
+            </td>
+            <td>
+              <button class="btn-del" (click)="deleteUser(u.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW TAB - embeds the admin panel inline -->
+  <div *ngIf="activeTab==='admin-view'">
+    <div class="info-note">
+      📋 You are viewing the full Admin Panel as Super Admin. All labs, tests, prices and bookings are visible.
+    </div>
+    <app-admin></app-admin>
+  </div>
+</div>

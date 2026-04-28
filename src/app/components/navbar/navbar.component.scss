@@ -1,0 +1,86 @@
+.navbar { background: #1D9E75; padding: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.nav-container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.brand-name { font-size: 18px; font-weight: 500; color: white; }
+.nav-links { display: flex; gap: 8px; align-items: center; }
+.nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; padding: 6px 14px; border-radius: 6px; font-size: 14px; transition: all 0.15s; }
+.nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.2); color: white; }
+.nav-links .admin-link { background: rgba(0,0,0,0.15); color: white; }
+.hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 4px; }
+.hamburger span { display: block; width: 22px; height: 2px; background: white; border-radius: 2px; }
+@media (max-width: 640px) {
+  .hamburger { display: flex; }
+  .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; background: #1D9E75; flex-direction: column; padding: 1rem; z-index: 100; gap: 4px; }
+  .nav-links.open { display: flex; }
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username {
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 500;
+}
+
+.role-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.role-chip.admin {
+  background: rgba(252, 228, 236, 0.3);
+  color: #fce4ec;
+}
+
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.login-link {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 6px;
+  padding: 5px 14px !important;
+}
+
+/* Super Admin nav link */
+.super-link {
+  color: #7c3aed !important;
+  font-weight: 700;
+  &:hover { color: #5b21b6 !important; }
+}
+
+/* Role chip extended */
+.role-chip.super {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+}
+
+/* Prescription nav link */
+.rx-link {
+  font-weight: 600;
+  &.active { color: #6c63ff; }
+}

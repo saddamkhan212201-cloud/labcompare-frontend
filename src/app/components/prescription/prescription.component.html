@@ -1,0 +1,383 @@
+<div class="rx-page">
+
+  <!-- 
+       STEP: CHOOSE MODE
+   -->
+  <div *ngIf="step === 'choose'" class="choose-screen">
+    <div class="rx-hero">
+      <div class="rx-hero-icon">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M12 44h24a4 4 0 004-4V16L28 4H12a4 4 0 00-4 4v32a4 4 0 004 4z"/>
+          <path d="M28 4v12h12"/>
+          <path d="M18 26h12M18 32h8"/>
+        </svg>
+      </div>
+      <h1>Prescription Scanner</h1>
+      <p>Upload or photo your doctor's prescription - our AI reads it and shows you the best lab prices instantly</p>
+    </div>
+
+    <div class="mode-cards">
+
+      <!-- Upload card -->
+      <div class="mode-card" (click)="selectUpload()">
+        <div class="mode-icon upload-icon">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M16 4v16M10 10l6-6 6 6"/>
+            <path d="M4 22v4a2 2 0 002 2h20a2 2 0 002-2v-4"/>
+          </svg>
+        </div>
+        <h2>Upload File</h2>
+        <p>Choose a saved photo or PDF of your prescription from your device</p>
+        <div class="mode-formats">JPG · PNG · PDF · WEBP</div>
+        <button class="mode-btn">Select file </button>
+      </div>
+
+      <!-- Camera card -->
+      <div class="mode-card" (click)="selectCamera()">
+        <div class="mode-icon camera-icon">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M2 10a3 3 0 013-3h2l2-3h10l2 3h2a3 3 0 013 3v14a3 3 0 01-3 3H5a3 3 0 01-3-3V10z"/>
+            <circle cx="16" cy="17" r="5"/>
+          </svg>
+        </div>
+        <h2>Take a Photo</h2>
+        <p>Use your device camera to photograph the prescription directly</p>
+        <div class="mode-formats">Best for physical prescriptions</div>
+        <button class="mode-btn">Open camera </button>
+      </div>
+
+    </div>
+
+    <div class="rx-tips">
+      <div class="tip-item">
+        <span>💡</span> Make sure test names written by the doctor are clearly visible
+      </div>
+      <div class="tip-item">
+        <span>💡</span> Good lighting and sharp focus give the most accurate results
+      </div>
+      <div class="tip-item">
+        <span>🔒</span> Your prescription is never stored - analyzed privately in real-time
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 
+       STEP: UPLOAD FILE
+   -->
+  <div *ngIf="step === 'upload'" class="input-screen">
+    <div class="screen-header">
+      <button class="back-btn" (click)="goBack()">← Back</button>
+      <h2>Upload Prescription</h2>
+    </div>
+
+    <!-- Drop zone -->
+    <div class="drop-zone"
+         [class.drag-over]="dragOver"
+         [class.has-file]="!!previewUrl || !!selectedFile"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave()"
+         (drop)="onDrop($event)"
+         (click)="fileInputEl.nativeElement.click()">
+
+      <ng-container *ngIf="!selectedFile">
+        <div class="dz-upload-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M24 8v24M14 18l10-10 10 10"/>
+            <path d="M8 34v4a2 2 0 002 2h28a2 2 0 002-2v-4"/>
+          </svg>
+        </div>
+        <p class="dz-title">Drag &amp; drop your prescription here</p>
+        <p class="dz-hint">or <strong>tap to browse</strong></p>
+        <div class="dz-formats">JPG · PNG · WEBP · HEIC · PDF &nbsp;•&nbsp; Max 20 MB</div>
+      </ng-container>
+
+      <ng-container *ngIf="selectedFile">
+        <img *ngIf="previewUrl" [src]="previewUrl" alt="Prescription preview" class="file-preview-img" />
+        <div *ngIf="!previewUrl" class="pdf-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 44h24a4 4 0 004-4V16L28 4H12a4 4 0 00-4 4v32a4 4 0 004 4z"/>
+            <path d="M28 4v12h12"/>
+          </svg>
+          <span>{{ selectedFile.name }}</span>
+        </div>
+        <p class="change-hint">Tap to change file</p>
+      </ng-container>
+    </div>
+
+    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
+
+    <!-- City filter -->
+    <div class="city-row" *ngIf="selectedFile">
+      <label>Filter results by city (optional)</label>
+      <div class="city-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <input [(ngModel)]="cityFilter" placeholder="e.g. Mumbai, Delhi..." />
+      </div>
+    </div>
+
+    <button class="analyze-btn" *ngIf="selectedFile" (click)="analyzePrescription()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      Analyze Prescription
+    </button>
+  </div>
+
+
+  <!-- 
+       STEP: CAMERA
+   -->
+  <div *ngIf="step === 'camera'" class="input-screen">
+    <div class="screen-header">
+      <button class="back-btn" (click)="goBack()">← Back</button>
+      <h2>Take Photo</h2>
+    </div>
+
+    <!-- Camera error -->
+    <div *ngIf="cameraError" class="camera-error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+      </svg>
+      <p>{{ cameraError }}</p>
+      <button class="mode-btn" (click)="selectUpload()">Switch to Upload </button>
+    </div>
+
+    <!-- Live camera view -->
+    <div class="camera-wrap" *ngIf="!cameraError && !capturedDataUrl">
+      <video #videoEl autoplay playsinline class="camera-video" [class.ready]="cameraReady"></video>
+      <div *ngIf="!cameraReady" class="camera-loading">
+        <div class="spinner"></div>
+        <p>Starting camera...</p>
+      </div>
+      <div class="camera-guide" *ngIf="cameraReady">
+        <div class="guide-frame"></div>
+        <p class="guide-hint">Position prescription inside the frame</p>
+      </div>
+      <canvas #canvasEl style="display:none"></canvas>
+    </div>
+
+    <!-- Capture button -->
+    <button class="capture-btn" *ngIf="cameraReady && !capturedDataUrl" (click)="capturePhoto()">
+      <span class="capture-ring"></span>
+    </button>
+    <p class="capture-hint" *ngIf="cameraReady && !capturedDataUrl">Tap the button to capture</p>
+
+    <!-- Captured preview -->
+    <div *ngIf="capturedDataUrl" class="captured-wrap">
+      <img [src]="capturedDataUrl" alt="Captured prescription" class="captured-img" />
+      <div class="captured-actions">
+        <button class="retake-btn" (click)="retakePhoto()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 101.4-4.4L1 10"/>
+          </svg>
+          Retake
+        </button>
+
+        <div class="city-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <input [(ngModel)]="cityFilter" placeholder="Filter by city..." />
+        </div>
+
+        <button class="analyze-btn" (click)="analyzePrescription()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          Analyze
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 
+       STEP: ANALYZING
+   -->
+  <div *ngIf="step === 'analyzing'" class="analyzing-screen">
+    <div class="analyzing-card">
+      <div class="scanning-animation">
+        <div class="scan-doc">
+          <div *ngIf="previewUrl" class="scan-preview">
+            <img [src]="previewUrl" alt="Prescription" />
+          </div>
+          <div *ngIf="!previewUrl" class="scan-placeholder">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M12 44h24a4 4 0 004-4V16L28 4H12a4 4 0 00-4 4v32a4 4 0 004 4z"/>
+              <path d="M28 4v12h12M18 26h12M18 32h8"/>
+            </svg>
+          </div>
+          <div class="scan-beam"></div>
+        </div>
+      </div>
+      <h2>Reading your prescription...</h2>
+      <p class="progress-msg">{{ analysisProgress }}</p>
+      <div class="progress-steps">
+        <div class="ps-item done">
+          <span class="ps-dot"></span>
+          <span>Image received</span>
+        </div>
+        <div class="ps-item" [class.active]="analysisProgress.includes('AI')">
+          <span class="ps-dot"></span>
+          <span>AI reading prescription</span>
+        </div>
+        <div class="ps-item" [class.active]="analysisProgress.includes('Matching')">
+          <span class="ps-dot"></span>
+          <span>Matching tests to catalog</span>
+        </div>
+        <div class="ps-item">
+          <span class="ps-dot"></span>
+          <span>Fetching lab prices</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 
+       STEP: RESULTS
+   -->
+  <div *ngIf="step === 'results'" class="results-screen">
+
+    <!-- Summary bar -->
+    <div class="results-bar">
+      <div class="results-stats">
+        <div class="rs-stat">
+          <span class="rs-num">{{ extractedTests.length }}</span>
+          <span class="rs-label">Tests found</span>
+        </div>
+        <div class="rs-stat" *ngIf="matchedCount > 0">
+          <span class="rs-num">{{ matchedCount }}</span>
+          <span class="rs-label">Matched in catalog</span>
+        </div>
+        <div class="rs-stat highlight" *ngIf="totalMinCost > 0">
+          <span class="rs-num">₹{{ totalMinCost | number:'1.0-0' }}</span>
+          <span class="rs-label">Min total cost</span>
+        </div>
+      </div>
+
+      <div class="results-controls">
+        <div class="city-input small">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <input [(ngModel)]="cityFilter" (ngModelChange)="onCityChange()" placeholder="Filter by city..." />
+        </div>
+        <select [(ngModel)]="sortBy" class="sort-sel">
+          <option value="price-asc">Price ↑</option>
+          <option value="price-desc">Price ↓</option>
+          <option value="rating">Best rated</option>
+          <option value="name">Lab name</option>
+        </select>
+        <button class="new-scan-btn" (click)="reset()">New scan</button>
+      </div>
+    </div>
+
+    <!-- Doctor notes -->
+    <div class="doctor-notes" *ngIf="doctorNotes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 12h6m-6 4h6M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+      </svg>
+      <span><strong>Doctor notes:</strong> {{ doctorNotes }}</span>
+    </div>
+
+    <!-- Test result cards -->
+    <div *ngFor="let et of extractedTests" class="test-card">
+      <div class="test-card-header" (click)="et.expanded = !et.expanded">
+        <div class="tch-left">
+          <span class="test-badge" [class.matched]="et.matched" [class.unknown]="!et.matched">
+            {{ et.matched ? '🧪' : '❓' }}
+          </span>
+          <div>
+            <div class="test-name">{{ et.matched ? et.matched.name : et.raw }}</div>
+            <div class="test-cat" *ngIf="et.matched">{{ et.matched.category }}</div>
+            <div class="test-cat warn" *ngIf="!et.matched">Not in our catalog - search manually</div>
+          </div>
+        </div>
+        <div class="tch-right">
+          <span class="lab-count" *ngIf="et.prices.length > 0">{{ et.prices.length }} labs</span>
+          <span class="from-price" *ngIf="et.prices.length > 0">from ₹{{ lowestPrice(et.prices) | number:'1.0-0' }}</span>
+          <span class="chevron" [class.open]="et.expanded">▾</span>
+        </div>
+      </div>
+
+      <div class="test-card-body" *ngIf="et.expanded">
+
+        <!-- Loading skeletons -->
+        <div *ngIf="et.loading" class="skeletons">
+          <div class="skel" *ngFor="let i of [1,2,3]"></div>
+        </div>
+
+        <!-- Unmatched -->
+        <div *ngIf="!et.matched && !et.loading" class="unmatched-msg">
+          <p>This test wasn't found in our database. Try searching on the <a routerLink="/search">Compare Tests</a> page.</p>
+        </div>
+
+        <!-- Lab price rows -->
+        <div *ngFor="let p of sortedPrices(et.prices)"
+             class="lab-row"
+             [class.best-price]="p.effectivePrice === lowestPrice(et.prices)">
+          <div class="lr-left">
+            <div class="lab-av">{{ getInitials(p.labName) }}</div>
+            <div class="lab-details">
+              <div class="lab-name-row">
+                <span class="lab-nm">{{ p.labName }}</span>
+                <span class="tag lowest" *ngIf="p.effectivePrice === lowestPrice(et.prices)">Lowest</span>
+                <span class="tag accred">{{ p.labAccreditation }}</span>
+              </div>
+              <div class="lab-meta">
+                <span class="stars">
+                  <ng-container *ngFor="let s of [1,2,3,4,5]">
+                    <span [class.on]="s <= p.labRating">★</span>
+                  </ng-container>
+                  {{ p.labRating }}
+                </span>
+                <span class="sep">•</span>
+                <span>{{ p.labCity }}</span>
+                <span class="sep">•</span>
+                <span>{{ p.reportDuration }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="lr-right">
+            <div class="price-col">
+              <span class="eff">₹{{ p.effectivePrice | number:'1.0-0' }}</span>
+              <span class="orig" *ngIf="p.discountPercent > 0">₹{{ p.price | number:'1.0-0' }}</span>
+              <span class="disc" *ngIf="p.discountPercent > 0">{{ p.discountPercent }}% off</span>
+            </div>
+            <button class="book-btn" (click)="bookNow(p)">Book Now</button>
+          </div>
+        </div>
+
+        <!-- Empty -->
+        <div *ngIf="!et.loading && et.matched && et.prices.length === 0" class="empty-lab">
+          No labs found for this city.
+          <button class="link-btn" (click)="cityFilter = ''; onCityChange()">Clear city filter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 
+       STEP: ERROR
+   -->
+  <div *ngIf="step === 'error'" class="error-screen">
+    <div class="error-card">
+      <div class="err-icon">⚠️</div>
+      <h3>Could not read prescription</h3>
+      <p>{{ errorMsg }}</p>
+      <div class="err-actions">
+        <button class="analyze-btn" (click)="goBack()">Try again</button>
+        <button class="retake-btn" (click)="reset()">Start over</button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,66 @@
+.page-container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+h1 { font-size: 22px; font-weight: 500; margin-bottom: 1rem; }
+h3 { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
+.alert { padding: 10px 16px; border-radius: 8px; margin-bottom: 1rem; background: #E1F5EE; color: #085041; font-size: 14px; }
+.alert.error { background: #FCEBEB; color: #A32D2D; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid #eee; margin-bottom: 1.25rem; }
+.tab { border: none; background: none; padding: 10px 18px; font-size: 14px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab.active { color: #1D9E75; border-bottom-color: #1D9E75; }
+.form-card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
+input, select { border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; font-family: inherit; width: 100%; transition: border 0.15s; }
+input:focus, select:focus { border-color: #1D9E75; }
+.full { grid-column: 1 / -1; }
+.form-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.checkbox-label input { width: auto; }
+.btn-group { display: flex; gap: 8px; }
+.btn-primary { background: #1D9E75; color: white; border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-primary:hover { background: #0F6E56; }
+.btn-secondary { background: white; color: #444; border: 1px solid #ddd; border-radius: 8px; padding: 9px 16px; font-size: 14px; cursor: pointer; }
+.data-table { background: white; border: 1px solid #eee; border-radius: 12px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: #fafafa; }
+th { padding: 10px 14px; text-align: left; font-weight: 500; color: #666; border-bottom: 1px solid #eee; white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid #f5f5f5; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+.actions { display: flex; gap: 6px; }
+.btn-edit { background: #E6F1FB; color: #0C447C; border: none; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.btn-del { background: #FCEBEB; color: #A32D2D; border: none; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.cat-tag { background: #E1F5EE; color: #085041; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.desc { color: #888; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+code { font-family: monospace; font-size: 12px; background: #f3f3f3; padding: 2px 6px; border-radius: 4px; }
+.status-badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 10px; }
+.status-confirmed { background: #E1F5EE; color: #085041; }
+.status-cancelled { background: #FCEBEB; color: #A32D2D; }
+.status-completed { background: #E6F1FB; color: #0C447C; }
+
+/* Role access banner */
+.role-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+
+  &.restricted {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    .role-icon { color: #856404; }
+    strong { color: #856404; }
+  }
+
+  &.full-access {
+    background: #d1ecf1;
+    border: 1px solid #17a2b8;
+    .role-icon { color: #0c5460; }
+    strong { color: #0c5460; }
+  }
+
+  .role-icon { font-size: 1.2rem; }
+  .role-info { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  em { font-weight: 600; font-style: normal; }
+}

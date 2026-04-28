@@ -1,0 +1,110 @@
+<div class="page-container">
+
+  <!-- ─── Page tabs ──────────────────────────────────────── -->
+  <div class="page-tabs">
+    <button class="page-tab" [class.active]="activeTab==='search'" (click)="activeTab='search'">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="9" cy="9" r="6"/><path d="m17 17-3.5-3.5"/>
+      </svg>
+      Compare Tests
+    </button>
+    <button class="page-tab rx-tab" [class.active]="activeTab==='prescription'" (click)="activeTab='prescription'">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M6 18h8a2 2 0 002-2V7l-4-4H6a2 2 0 00-2 2v11a2 2 0 002 2z"/>
+        <path d="M13 3v4h4M8 12h4M8 15h2"/>
+      </svg>
+      Prescription Scanner
+      <span class="tab-badge">AI</span>
+    </button>
+  </div>
+
+  <!--  TAB: COMPARE TESTS  -->
+  <div *ngIf="activeTab === 'search'">
+    <div class="search-header">
+      <h1>Compare Lab Test Prices</h1>
+      <p class="subtitle">Find the best price for your test across top accredited labs</p>
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" placeholder="Search test name or category..." class="search-input" />
+        </div>
+        <div class="search-input-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+          <input [(ngModel)]="cityFilter" (ngModelChange)="onCityChange()" placeholder="Filter by city..." class="search-input city-input" />
+        </div>
+      </div>
+      <div class="category-chips">
+        <button *ngFor="let cat of categories" class="chip" [class.active]="selectedCategory===cat" (click)="setCategory(cat)">{{cat}}</button>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="test-list-panel">
+        <div class="panel-header">Tests <span class="count">{{tests.length}}</span></div>
+        <div *ngIf="loading && !tests.length" class="loading-row">Loading...</div>
+        <div *ngFor="let test of tests" class="test-row" [class.active]="selectedTestId===test.id" (click)="selectTest(test)">
+          <div class="test-name">{{test.name}}</div>
+          <span class="test-cat">{{test.category}}</span>
+        </div>
+      </div>
+
+      <div class="prices-panel">
+        <div class="prices-header">
+          <div *ngIf="prices.length" class="result-info">{{prices.length}} lab{{prices.length!==1?'s':''}} found</div>
+          <div *ngIf="!prices.length && !loading" class="result-info">Select a test to compare prices</div>
+          <select [(ngModel)]="sortBy" class="sort-select">
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Best Rated</option>
+            <option value="name">Lab Name A-Z</option>
+          </select>
+        </div>
+
+        <div *ngIf="loading" class="skeleton-list">
+          <div class="skeleton-card" *ngFor="let i of [1,2,3]"></div>
+        </div>
+
+        <div *ngIf="!loading && sortedPrices.length===0 && selectedTestId" class="empty-state">
+          No labs found for this test and city combination.
+        </div>
+
+        <div *ngFor="let p of sortedPrices" class="price-card" [class.best]="p.effectivePrice===lowestPrice">
+          <div class="lab-info">
+            <div class="lab-avatar">{{getInitials(p.labName)}}</div>
+            <div class="lab-details">
+              <div class="lab-name-row">
+                <span class="lab-name">{{p.labName}}</span>
+                <span class="best-badge" *ngIf="p.effectivePrice===lowestPrice">Lowest Price</span>
+                <span class="accred-tag">{{p.labAccreditation}}</span>
+              </div>
+              <div class="lab-meta">
+                <span class="stars">
+                  <span *ngFor="let s of [1,2,3,4,5]" [class.filled]="s<=p.labRating">★</span>
+                  {{p.labRating}}
+                </span>
+                <span class="dot">•</span>
+                <span>{{p.labCity}}</span>
+                <span class="dot">•</span>
+                <span>{{p.reportDuration}}</span>
+              </div>
+            </div>
+          </div>
+          <div class="price-book">
+            <div class="price-col">
+              <div class="eff-price">₹{{p.effectivePrice | number:'1.0-0'}}</div>
+              <div *ngIf="p.discountPercent>0" class="orig-price">₹{{p.price | number:'1.0-0'}}</div>
+              <div *ngIf="p.discountPercent>0" class="discount-tag">{{p.discountPercent}}% off</div>
+            </div>
+            <button class="book-btn" (click)="bookNow(p)">Book Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--  TAB: PRESCRIPTION SCANNER  -->
+  <div *ngIf="activeTab === 'prescription'">
+    <app-prescription></app-prescription>
+  </div>
+
+</div>

@@ -1,0 +1,175 @@
+<div class="page-container">
+  <div class="booking-wrap">
+
+    <!-- Test summary banner -->
+    <div class="test-banner" *ngIf="price">
+      <div>
+        <div class="test-banner-name">{{price.testName}}</div>
+        <div class="test-banner-meta">{{price.labName}} &nbsp;•&nbsp; {{price.labCity}} &nbsp;•&nbsp; {{price.labAccreditation}}</div>
+      </div>
+      <div class="test-banner-price">₹{{price.effectivePrice | number:'1.0-0'}}</div>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-item" [class.active]="step>=1" [class.done]="step>1">
+        <div class="step-dot">{{step>1?'✓':'1'}}</div><span>Patient Details</span>
+      </div>
+      <div class="step-line" [class.done]="step>1"></div>
+      <div class="step-item" [class.active]="step>=2" [class.done]="step>2">
+        <div class="step-dot">{{step>2?'✓':'2'}}</div><span>Schedule</span>
+      </div>
+      <div class="step-line" [class.done]="step>2"></div>
+      <div class="step-item" [class.active]="step>=3" [class.done]="step>3">
+        <div class="step-dot">{{step>3?'✓':'3'}}</div><span>Confirm</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Patient Details -->
+    <div *ngIf="step===1" class="step-content">
+      <h2>Patient details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full name *</label>
+          <input [(ngModel)]="form.patientName" placeholder="Enter full name" [class.error]="errors['name']"/>
+          <span class="err-msg" *ngIf="errors['name']">{{errors['name']}}</span>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input [(ngModel)]="form.patientAge" type="number" placeholder="Age" min="1" max="120"/>
+        </div>
+        <div class="form-group">
+          <label>Phone number *</label>
+          <input [(ngModel)]="form.phone" placeholder="10-digit mobile number" [class.error]="errors['phone']"/>
+          <span class="err-msg" *ngIf="errors['phone']">{{errors['phone']}}</span>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input [(ngModel)]="form.email" type="email" placeholder="your@email.com" [class.error]="errors['email']"/>
+          <span class="err-msg" *ngIf="errors['email']">{{errors['email']}}</span>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Sample collection</label>
+        <div class="radio-cards">
+          <div class="radio-card" [class.selected]="form.collectionType==='HOME'" (click)="form.collectionType='HOME'">
+            <div class="radio-title">Home Collection</div>
+            <div class="radio-sub">₹50 convenience fee</div>
+          </div>
+          <div class="radio-card" [class.selected]="form.collectionType==='LAB'" (click)="form.collectionType='LAB'">
+            <div class="radio-title">Visit Lab</div>
+            <div class="radio-sub">No extra charge</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group full" *ngIf="form.collectionType==='HOME'">
+        <label>Home address *</label>
+        <textarea [(ngModel)]="form.collectionAddress" placeholder="Full address for sample pickup" rows="2" [class.error]="errors['address']"></textarea>
+        <span class="err-msg" *ngIf="errors['address']">{{errors['address']}}</span>
+      </div>
+      <div class="step-actions">
+        <button class="btn-primary" (click)="next()">Next: Pick a slot </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Schedule -->
+    <div *ngIf="step===2" class="step-content">
+      <h2>Select appointment</h2>
+      <div class="form-group full">
+        <label>Choose date</label>
+        <div class="date-grid">
+          <div *ngFor="let d of dates" class="date-card" [class.selected]="form.appointmentDate===d.value" (click)="form.appointmentDate=d.value">{{d.label}}</div>
+        </div>
+        <span class="err-msg" *ngIf="errors['date']">{{errors['date']}}</span>
+      </div>
+      <div class="form-group full">
+        <label>Choose time slot</label>
+        <div class="slot-grid">
+          <div *ngFor="let s of slots" class="slot-card" [class.selected]="form.appointmentSlot===s" (click)="form.appointmentSlot=s">{{s}}</div>
+        </div>
+        <span class="err-msg" *ngIf="errors['slot']">{{errors['slot']}}</span>
+      </div>
+      <div class="step-actions">
+        <button class="btn-secondary" (click)="back()">← Back</button>
+        <button class="btn-primary" (click)="next()">Review Booking </button>
+      </div>
+    </div>
+
+    <!-- Step 3: Confirm -->
+    <div *ngIf="step===3" class="step-content">
+      <h2>Review &amp; confirm</h2>
+      <div class="summary-card">
+        <div class="summary-row"><span>Patient</span><span>{{form.patientName}} <span *ngIf="form.patientAge">(Age {{form.patientAge}})</span></span></div>
+        <div class="summary-row"><span>Phone</span><span>{{form.phone}}</span></div>
+        <div class="summary-row"><span>Collection</span><span>{{form.collectionType==='HOME' ? 'Home - '+form.collectionAddress : 'Visit Lab - '+price?.labName}}</span></div>
+        <div class="summary-row"><span>Date &amp; time</span><span>{{form.appointmentDate}} at {{form.appointmentSlot}}</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-row"><span>Test fee</span><span>₹{{price?.effectivePrice | number:'1.0-0'}}</span></div>
+        <div class="summary-row" *ngIf="form.collectionType==='HOME'"><span>Home collection</span><span>₹50</span></div>
+        <div class="summary-row total"><span>Total</span><span>₹{{total | number:'1.0-0'}}</span></div>
+      </div>
+
+      <div class="form-group full" style="margin-top:1rem">
+        <label>Payment method</label>
+        <div class="radio-cards">
+          <div class="radio-card" [class.selected]="form.paymentMethod==='UPI'" (click)="form.paymentMethod='UPI'">UPI</div>
+          <div class="radio-card" [class.selected]="form.paymentMethod==='CARD'" (click)="form.paymentMethod='CARD'">Card</div>
+          <div class="radio-card" [class.selected]="form.paymentMethod==='CASH'" (click)="form.paymentMethod='CASH'">Pay at Lab</div>
+        </div>
+      </div>
+      <span class="err-msg" *ngIf="errors['submit']">{{errors['submit']}}</span>
+      <div class="step-actions">
+        <button class="btn-secondary" (click)="back()">← Back</button>
+        <button class="btn-primary" (click)="confirm()" [disabled]="loading">{{loading ? 'Confirming...' : 'Confirm Booking'}}</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div *ngIf="step===4 && confirmed" class="step-content success-state">
+      <div class="success-icon">✓</div>
+      <h2>Booking Confirmed!</h2>
+      <p class="success-msg">Your <strong>{{confirmed.testName}}</strong> at <strong>{{confirmed.labName}}</strong> is booked for {{confirmed.appointmentDate}} at {{confirmed.appointmentSlot}}.</p>
+      <div class="booking-ref">Booking ID: <strong>{{confirmed.bookingRef}}</strong></div>
+
+      <div class="email-notice" *ngIf="confirmed.email">
+        <span class="email-icon">📧</span>
+        Confirmation email sent to <strong>{{confirmed.email}}</strong>
+      </div>
+
+      <!-- QR Code Card -->
+      <div class="qr-card">
+        <div class="qr-card-header">
+          <span class="qr-title">💳 Pay via UPI</span>
+          <span class="qr-subtitle">Scan with any UPI app - GPay, PhonePe, Paytm</span>
+        </div>
+        <div class="qr-body">
+          <div *ngIf="qrLoading" class="qr-loader">
+            <div class="spinner"></div>
+            <span>Generating QR...</span>
+          </div>
+          <img *ngIf="!qrLoading && qrBase64" [src]="'data:image/png;base64,' + qrBase64" alt="UPI Payment QR Code" class="qr-image" (click)="openQrModal()" />
+          <div *ngIf="!qrLoading && qrBase64" class="qr-hint">Tap to enlarge</div>
+        </div>
+        <div class="qr-amount">Total: <strong>₹{{confirmed.totalAmount | number:'1.0-0'}}</strong></div>
+      </div>
+
+      <div class="success-actions">
+        <button class="btn-secondary" (click)="goMyBookings()">View My Bookings</button>
+        <button class="btn-primary" (click)="goSearch()">Compare More Tests</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- QR Modal Overlay -->
+<div class="qr-modal-overlay" *ngIf="showQrModal" (click)="closeQrModal()">
+  <div class="qr-modal" (click)="$event.stopPropagation()">
+    <button class="qr-modal-close" (click)="closeQrModal()">✕</button>
+    <h3>Scan to Pay via UPI</h3>
+    <p class="qr-modal-sub">{{confirmed?.labName}} &nbsp;•&nbsp; ₹{{confirmed?.totalAmount | number:'1.0-0'}}</p>
+    <img [src]="'data:image/png;base64,' + qrBase64" alt="UPI QR Code" class="qr-modal-img" />
+    <p class="qr-modal-ref">Booking Ref: <strong>{{confirmed?.bookingRef}}</strong></p>
+    <p class="qr-modal-note">Open GPay / PhonePe / Paytm and scan this QR code to pay ₹{{confirmed?.totalAmount | number:'1.0-0'}} to {{confirmed?.labName}}.</p>
+  </div>
+</div>

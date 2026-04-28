@@ -1,0 +1,140 @@
+<div class="page-container">
+  <h1>Admin Panel</h1>
+
+  <!-- Role & Scope Banner -->
+  <div class="role-banner" [class.restricted]="isRestricted" [class.full-access]="!isRestricted">
+    <span class="role-icon">{{ isRestricted ? '🔒' : '🛡️' }}</span>
+    <div class="role-info">
+      <strong>{{ auth.isSuperAdmin() ? 'Super Admin' : 'Lab Admin' }} - {{ auth.getUsername() }}</strong>
+      <span *ngIf="isRestricted"> · Restricted to: <em>{{ restrictedLabLabel }}</em></span>
+      <span *ngIf="!isRestricted"> · Full access to all labs</span>
+    </div>
+  </div>
+
+  <div class="alert" *ngIf="msg" [class.error]="msgType==='error'">{{msg}}</div>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab==='labs'" (click)="activeTab='labs'">Labs</button>
+    <button class="tab" [class.active]="activeTab==='tests'" (click)="activeTab='tests'">Tests</button>
+    <button class="tab" [class.active]="activeTab==='prices'" (click)="activeTab='prices'">Prices</button>
+    <button class="tab" [class.active]="activeTab==='bookings'" (click)="activeTab='bookings'">Bookings</button>
+  </div>
+
+  <!-- LABS -->
+  <div *ngIf="activeTab==='labs'">
+    <div class="form-card">
+      <h3>{{editingLab ? 'Edit Lab' : 'Add New Lab'}}</h3>
+      <div class="form-grid">
+        <input [(ngModel)]="labForm.name" placeholder="Lab name *" />
+        <input [(ngModel)]="labForm.city" placeholder="City *" />
+        <input [(ngModel)]="labForm.address" placeholder="Address" />
+        <input [(ngModel)]="labForm.phone" placeholder="Phone" />
+        <input [(ngModel)]="labForm.rating" type="number" step="0.1" min="1" max="5" placeholder="Rating (1-5)" />
+        <input [(ngModel)]="labForm.accreditation" placeholder="Accreditation (e.g. NABL)" />
+      </div>
+      <div class="form-actions">
+        <label class="checkbox-label"><input type="checkbox" [(ngModel)]="labForm.homeCollection" /> Home collection available</label>
+        <div class="btn-group">
+          <button class="btn-secondary" *ngIf="editingLab" (click)="cancelEditLab()">Cancel</button>
+          <button class="btn-primary" (click)="saveLab()">{{editingLab ? 'Update Lab' : 'Add Lab'}}</button>
+        </div>
+      </div>
+    </div>
+    <div class="data-table">
+      <table>
+        <thead><tr><th>Name</th><th>City</th><th>Rating</th><th>Accreditation</th><th>Home</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let lab of visibleLabs">
+            <td><strong>{{lab.name}}</strong></td>
+            <td>{{lab.city}}</td>
+            <td>⭐ {{lab.rating}}</td>
+            <td>{{lab.accreditation}}</td>
+            <td>{{lab.homeCollection ? '✓' : '✗'}}</td>
+            <td class="actions">
+              <button class="btn-edit" (click)="editLab(lab)">Edit</button>
+              <button class="btn-del" (click)="deleteLab(lab.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TESTS -->
+  <div *ngIf="activeTab==='tests'">
+    <div class="form-card">
+      <h3>Add New Test</h3>
+      <div class="form-grid">
+        <input [(ngModel)]="testForm.name" placeholder="Test name *" />
+        <input [(ngModel)]="testForm.category" placeholder="Category *" />
+        <input [(ngModel)]="testForm.description" placeholder="Description" class="full" />
+      </div>
+      <div class="form-actions"><button class="btn-primary" (click)="saveTest()">Add Test</button></div>
+    </div>
+    <div class="data-table">
+      <table>
+        <thead><tr><th>Test Name</th><th>Category</th><th>Description</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let test of tests">
+            <td><strong>{{test.name}}</strong></td>
+            <td><span class="cat-tag">{{test.category}}</span></td>
+            <td class="desc">{{test.description}}</td>
+            <td class="actions"><button class="btn-del" (click)="deleteTest(test.id)">Delete</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PRICES -->
+  <div *ngIf="activeTab==='prices'">
+    <div class="form-card">
+      <h3>Set Lab Price for Test</h3>
+      <div class="form-grid">
+        <select [(ngModel)]="priceForm.labId" [disabled]="isRestricted"><option value="">Select lab</option><option *ngFor="let l of visibleLabs" [value]="l.id">{{l.name}} ({{l.city}})</option></select>
+        <select [(ngModel)]="priceForm.testId"><option value="">Select test</option><option *ngFor="let t of tests" [value]="t.id">{{t.name}}</option></select>
+        <input [(ngModel)]="priceForm.price" type="number" placeholder="Price (₹) *" />
+        <input [(ngModel)]="priceForm.discountPercent" type="number" placeholder="Discount %" min="0" max="100" />
+        <input [(ngModel)]="priceForm.reportDuration" placeholder="Report time (e.g. Same Day)" />
+      </div>
+      <div class="form-actions"><button class="btn-primary" (click)="savePrice()">Save Price</button></div>
+    </div>
+    <div class="data-table">
+      <table>
+        <thead><tr><th>Lab</th><th>Test</th><th>Price</th><th>Discount</th><th>Effective</th><th>Report</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of visiblePrices">
+            <td>{{p.labName}}</td>
+            <td>{{p.testName}}</td>
+            <td>₹{{p.price | number:'1.0-0'}}</td>
+            <td>{{p.discountPercent}}%</td>
+            <td><strong>₹{{p.effectivePrice | number:'1.0-0'}}</strong></td>
+            <td>{{p.reportDuration}}</td>
+            <td class="actions"><button class="btn-del" (click)="deletePrice(p.id)">Delete</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div *ngIf="activeTab==='bookings'">
+    <div class="data-table">
+      <table>
+        <thead><tr><th>Ref</th><th>Patient</th><th>Test</th><th>Lab</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let b of visibleBookings">
+            <td><code>{{b.bookingRef}}</code></td>
+            <td>{{b.patientName}}</td>
+            <td>{{b.testName}}</td>
+            <td>{{b.labName}}</td>
+            <td>{{b.appointmentDate | date:'dd MMM'}} {{b.appointmentSlot}}</td>
+            <td>₹{{b.totalAmount | number:'1.0-0'}}</td>
+            <td><span class="status-badge" [ngClass]="statusClass(b.status)">{{b.status}}</span></td>
+            <td class="actions"><button class="btn-del" *ngIf="b.status==='CONFIRMED'" (click)="cancelBooking(b.bookingRef)">Cancel</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

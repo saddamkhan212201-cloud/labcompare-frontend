@@ -1,0 +1,49 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        </svg>
+      </div>
+      <span class="brand-name" routerLink="/search" style="cursor:pointer">LabCompare</span>
+    </div>
+
+    <div class="nav-links" [class.open]="menuOpen">
+      <a routerLink="/search" routerLinkActive="active" (click)="menuOpen=false">Compare Tests</a>
+
+      <!-- Regular user links -->
+      <a routerLink="/my-bookings" routerLinkActive="active" (click)="menuOpen=false"
+         *ngIf="auth.isLoggedIn() && !auth.isAdminOrSuper()">My Bookings</a>
+
+      <!-- Admin link (ADMIN or SUPERADMIN) -->
+      <a routerLink="/admin" routerLinkActive="active" class="admin-link" (click)="menuOpen=false"
+         *ngIf="auth.isAdminOrSuper()">
+        {{ auth.isAdmin() ? '🏥 Admin Panel' : '🛡️ Admin Panel' }}
+      </a>
+
+      <!-- Super Admin exclusive link -->
+      <a routerLink="/superadmin" routerLinkActive="active" class="super-link" (click)="menuOpen=false"
+         *ngIf="auth.isSuperAdmin()">👑 Super Admin</a>
+
+      <!-- Not logged in -->
+      <a routerLink="/login" routerLinkActive="active" class="login-link" (click)="menuOpen=false"
+         *ngIf="!auth.isLoggedIn()">Login</a>
+
+      <!-- Logged in - user info -->
+      <div class="user-info" *ngIf="auth.isLoggedIn()">
+        <span class="role-chip"
+              [class.super]="auth.isSuperAdmin()"
+              [class.admin]="auth.isAdmin()">
+          {{ auth.isSuperAdmin() ? '👑 SuperAdmin' : auth.isAdmin() ? 'Admin' : 'User' }}
+        </span>
+        <span class="username">{{ auth.getUsername() }}</span>
+        <button class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+
+    <button class="hamburger" (click)="menuOpen=!menuOpen">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>

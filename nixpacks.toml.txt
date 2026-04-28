@@ -1,0 +1,8 @@
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build -- --configuration production"]
+
+[start]
+cmd = "npx serve -s dist/labcompare-frontend/browser -l $PORT"

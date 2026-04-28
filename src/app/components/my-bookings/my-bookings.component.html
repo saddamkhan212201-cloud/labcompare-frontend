@@ -1,0 +1,32 @@
+<div class="page-container">
+  <h1>My Bookings</h1>
+  <div class="search-box">
+    <input [(ngModel)]="phone" placeholder="Enter 10-digit mobile number" (keyup.enter)="search()" />
+    <button class="btn-primary" (click)="search()" [disabled]="loading">{{loading ? 'Searching...' : 'Search'}}</button>
+  </div>
+  <span class="err-msg" *ngIf="error">{{error}}</span>
+
+  <div *ngIf="searched && bookings.length===0" class="empty-state">No bookings found for this number.</div>
+
+  <div *ngFor="let b of bookings" class="booking-card">
+    <div class="booking-header">
+      <div>
+        <div class="booking-ref">{{b.bookingRef}}</div>
+        <div class="booking-date">Booked on {{b.createdAt | date:'dd MMM yyyy, h:mm a'}}</div>
+      </div>
+      <span class="status-badge" [ngClass]="statusClass(b.status)">{{b.status}}</span>
+    </div>
+    <div class="booking-body">
+      <div class="info-row"><span>Test</span><span>{{b.testName}}</span></div>
+      <div class="info-row"><span>Lab</span><span>{{b.labName}}</span></div>
+      <div class="info-row"><span>Patient</span><span>{{b.patientName}} <span *ngIf="b.patientAge">(Age {{b.patientAge}})</span></span></div>
+      <div class="info-row"><span>Appointment</span><span>{{b.appointmentDate | date:'dd MMM yyyy'}} at {{b.appointmentSlot}}</span></div>
+      <div class="info-row"><span>Collection</span><span>{{b.collectionType==='HOME' ? 'Home - '+b.collectionAddress : 'Visit Lab'}}</span></div>
+      <div class="info-row"><span>Payment</span><span>{{b.paymentMethod}}</span></div>
+      <div class="info-row total"><span>Total Amount</span><span>₹{{b.totalAmount | number:'1.0-0'}}</span></div>
+    </div>
+    <div class="booking-footer" *ngIf="b.status==='CONFIRMED'">
+      <button class="btn-cancel" (click)="cancel(b.bookingRef)">Cancel Booking</button>
+    </div>
+  </div>
+</div>

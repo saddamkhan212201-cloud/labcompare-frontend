@@ -1,0 +1,144 @@
+.page-container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+.search-header { margin-bottom: 1.5rem; }
+h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.subtitle { color: #666; font-size: 14px; margin-bottom: 1rem; }
+.search-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.search-input-wrap { position: relative; flex: 1; min-width: 200px; }
+.icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #888; }
+.search-input { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 9px 12px 9px 34px; font-size: 14px; outline: none; transition: border 0.15s; }
+.search-input:focus { border-color: #1D9E75; }
+.city-input { max-width: 200px; }
+.category-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid #ddd; background: white; border-radius: 20px; padding: 5px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.chip.active { background: #E1F5EE; border-color: #9FE1CB; color: #085041; font-weight: 500; }
+.content-grid { display: grid; grid-template-columns: 280px 1fr; gap: 1rem; }
+@media(max-width: 720px) { .content-grid { grid-template-columns: 1fr; } }
+.test-list-panel { background: white; border: 1px solid #eee; border-radius: 12px; overflow: hidden; max-height: 70vh; overflow-y: auto; }
+.panel-header { padding: 12px 16px; font-weight: 500; font-size: 14px; border-bottom: 1px solid #eee; background: #fafafa; display: flex; align-items: center; gap: 8px; }
+.count { background: #E1F5EE; color: #085041; border-radius: 12px; padding: 1px 8px; font-size: 12px; }
+.test-row { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f5f5f5; transition: background 0.1s; }
+.test-row:hover { background: #f9f9f9; }
+.test-row.active { background: #E1F5EE; border-left: 3px solid #1D9E75; }
+.test-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.test-cat { font-size: 11px; color: #888; background: #f3f3f3; padding: 2px 8px; border-radius: 10px; }
+.prices-panel { display: flex; flex-direction: column; gap: 10px; }
+.prices-header { display: flex; align-items: center; justify-content: space-between; }
+.result-info { font-size: 13px; color: #666; }
+.sort-select { border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none; cursor: pointer; }
+.price-card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border 0.15s; flex-wrap: wrap; }
+.price-card.best { border: 1.5px solid #9FE1CB; background: #f7fef9; }
+.lab-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.lab-avatar { width: 40px; height: 40px; border-radius: 10px; background: #E1F5EE; border: 1px solid #9FE1CB; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 13px; color: #085041; flex-shrink: 0; }
+.lab-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.lab-name { font-weight: 500; font-size: 14px; }
+.best-badge { background: #E1F5EE; color: #085041; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.accred-tag { background: #f3f3f3; color: #666; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.lab-meta { font-size: 12px; color: #888; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stars .filled { color: #BA7517; }
+.dot { color: #ccc; }
+.price-book { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.price-col { text-align: right; }
+.eff-price { font-size: 20px; font-weight: 500; color: #0F6E56; }
+.orig-price { font-size: 12px; color: #aaa; text-decoration: line-through; }
+.discount-tag { font-size: 11px; color: #0F6E56; font-weight: 500; }
+.book-btn { background: #1D9E75; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.book-btn:hover { background: #0F6E56; }
+.skeleton-card { background: #f3f3f3; border-radius: 12px; height: 80px; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.empty-state { text-align: center; padding: 2rem; color: #888; }
+.loading-row { padding: 1rem; text-align: center; color: #888; font-size: 13px; }
+
+/* Prescription CTA Banner */
+.rx-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border: 1.5px solid #c4b5fd;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 18px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(108,99,255,0.15);
+  }
+
+  .rx-icon { font-size: 1.6rem; flex-shrink: 0; }
+
+  .rx-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    strong { font-size: 0.95rem; color: #4c1d95; }
+    span { font-size: 0.82rem; color: #6d28d9; }
+  }
+
+  .rx-arrow {
+    font-size: 1.2rem;
+    color: #6c63ff;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Page-level tabs ─────────────────────────────────────── */
+.page-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0;
+}
+
+.page-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 20px;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.18s;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: #6c63ff;
+    background: #f5f4ff;
+  }
+
+  &.active {
+    color: #6c63ff;
+    border-bottom-color: #6c63ff;
+    background: #f5f4ff;
+  }
+
+  &.rx-tab.active {
+    color: #7c3aed;
+    border-bottom-color: #7c3aed;
+    background: #f5f3ff;
+  }
+}
+
+.tab-badge {
+  background: linear-gradient(135deg, #6c63ff, #a78bfa);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
