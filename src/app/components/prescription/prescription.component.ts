@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService, TestItem, PriceDTO } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
+
 export interface ExtractedTest {
   raw: string;
   matched: TestItem | null;
@@ -26,6 +27,7 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   @ViewChild('videoEl') videoEl!: ElementRef<HTMLVideoElement>;
   @ViewChild('canvasEl') canvasEl!: ElementRef<HTMLCanvasElement>;
   @ViewChild('fileInput') fileInputEl!: ElementRef<HTMLInputElement>;
+  @ViewChild('cameraInput') cameraInputEl!: ElementRef<HTMLInputElement>;
 
   step: Step = 'choose';
   dragOver = false;
@@ -54,10 +56,35 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   selectUpload() { this.step = 'upload'; }
 
   selectCamera() {
-    this.step = 'camera';
-    this.cameraReady = false;
-    this.cameraError = '';
-    setTimeout(() => this.startCamera(), 100);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      // On mobile, use native camera input directly — avoids getUserMedia issues
+      setTimeout(() => this.cameraInputEl?.nativeElement.click(), 100);
+    } else {
+      this.step = 'camera';
+      this.cameraReady = false;
+      this.cameraError = '';
+      setTimeout(() => this.startCamera(), 100);
+    }
+  }
+
+  // Called when user picks a photo from native mobile camera input
+  onCameraFileCaptured(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    this.selectedFile = file;
+    this.capturedDataUrl = null;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.zone.run(() => {
+        this.previewUrl = e.target?.result as string;
+        this.step = 'upload'; // Show preview before analyzing
+      });
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be selected again
+    input.value = '';
   }
 
   onDragOver(e: DragEvent) { e.preventDefault(); this.dragOver = true; }
@@ -161,7 +188,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
       this.analysisProgress = 'Matching tests from database...';
 
-      // ── DYNAMIC MATCHING — uses whatever is in the database ──────────────
       const matched = this.dynamicMatch(extractedText);
 
       console.log('Matched tests:', matched.map(t => t.name));
@@ -197,9 +223,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── CORE: Dynamic matching against DB tests ────────────────────────────────
-  // This reads ALL tests from the database and tries to find them in OCR text.
-  // No hardcoding — add a test to DB and it automatically works here.
   private dynamicMatch(ocrText: string): TestItem[] {
     const fullText = ocrText.toLowerCase();
     const matched: TestItem[] = [];
@@ -210,14 +233,12 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
       const testNameLower = test.name.toLowerCase();
 
-      // Strategy 1: exact full name match
       if (fullText.includes(testNameLower)) {
         matched.push(test);
         foundIds.add(test.id);
         continue;
       }
 
-      // Strategy 2: match the base name (without brackets)
       const baseName = testNameLower.replace(/\(.*?\)/g, '').trim();
       if (baseName.length > 2 && fullText.includes(baseName)) {
         matched.push(test);
@@ -225,7 +246,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      // Strategy 3: match abbreviation in brackets e.g. "(CBC)" "(LFT)"
       const abbrevMatch = test.name.match(/\(([^)]+)\)/);
       if (abbrevMatch) {
         const abbrev = abbrevMatch[1].toLowerCase();
@@ -236,10 +256,8 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Strategy 4: category keyword match
       const category = test.category.toLowerCase();
       if (category.length > 3 && fullText.includes(category)) {
-        // Only match on category if it's specific enough
         const specificCategories = ['thyroid', 'dengue', 'radiology', 'pathology'];
         if (specificCategories.includes(category)) {
           matched.push(test);
@@ -248,7 +266,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Strategy 5: smart keyword matching using alias map
       const aliases = this.getAliases(test.name);
       for (const alias of aliases) {
         if (alias.length >= 3 && fullText.includes(alias)) {
@@ -262,87 +279,64 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     return matched;
   }
 
-  // ── Alias map — common abbreviations and OCR misreads per test name ────────
-  // Only needed for cases where the test name itself won't be found in OCR text.
-  // Add new tests to DB — their names will auto-match via Strategy 1-3 above.
-  // Only add aliases here for special abbreviations or OCR misread patterns.
   private getAliases(testName: string): string[] {
     const name = testName.toLowerCase();
 
-    // CBC
     if (name.includes('complete blood') || name.includes('cbc')) {
       return ['cbc', 'cbp', 'haemogram', 'hemogram', 'haemoglobin', 'hemoglobin', 'complete blood count'];
     }
-    // Thyroid
     if (name.includes('thyroid')) {
       return ['thyroid', 'tft', 'tsh', 't3', 't4', 'tyrode', 'thyro', 'thyroid profile'];
     }
-    // LFT
     if (name.includes('liver')) {
       return ['lft', 'liver function', 'sgot', 'sgpt', 'bilirubin', 'liver func'];
     }
-    // KFT
     if (name.includes('kidney')) {
       return ['kft', 'rft', 'kidney function', 'renal function', 'creatinine', 'kidney func'];
     }
-    // Lipid
     if (name.includes('lipid')) {
       return ['lipid', 'cholesterol', 'triglyceride', 'lipid profile', 'hdl', 'ldl'];
     }
-    // HbA1c / Diabetes
     if (name.includes('hba1c') || name.includes('diabetes')) {
       return ['hba1c', 'hb a1c', 'glycated', 'glycosylated', 'hbaic', 'hbalc', 'blood sugar', 'fasting'];
     }
-    // Vitamin D
     if (name.includes('vitamin d')) {
       return ['vitamin d', 'vit d', 'vitd', '25-oh', '25 oh', 'vit. d'];
     }
-    // Vitamin B12
     if (name.includes('vitamin b12') || name.includes('b12')) {
       return ['vitamin b12', 'vit b12', 'b12', 'b12 level', 'cyanocobalamin'];
     }
-    // Urine
     if (name.includes('urine')) {
       return ['urine', 'urine routine', 'urine r/m', 'urine rm', 'urinalysis', 'urin', 'usin'];
     }
-    // Dengue
     if (name.includes('dengue')) {
       return ['dengue', 'ns1', 'dengue ns1', 'dengu'];
     }
-    // COVID
     if (name.includes('covid') || name.includes('rt-pcr')) {
       return ['covid', 'rt-pcr', 'rtpcr', 'sars-cov', 'corona'];
     }
-    // Brain MRI
     if (name.includes('brain') && name.includes('mri')) {
       return ['mri brain', 'brain mri', 'mri of brain', 'brain mri plain', 'mri head'];
     }
-    // Bone Marrow
     if (name.includes('bone marrow')) {
       return ['bone marrow', 'bone marrow examination', 'bone marrow biopsy', 'marrow examination', 'bma', 'bmt'];
     }
-    // ESR
     if (name.includes('esr')) {
       return ['esr', 'erythrocyte sedimentation', 'sedimentation rate'];
     }
-    // ECG
     if (name.includes('ecg') || name.includes('electrocardiogram')) {
       return ['ecg', 'ekg', 'electrocardiogram', 'echocardiogram'];
     }
-    // X-Ray
     if (name.includes('x-ray') || name.includes('xray')) {
       return ['x-ray', 'xray', 'x ray', 'radiograph'];
     }
-    // CT Scan
     if (name.includes('ct scan') || name.includes('ct')) {
       return ['ct scan', 'ct', 'computed tomography', 'cat scan'];
     }
-    // Ultrasound
     if (name.includes('ultrasound')) {
       return ['ultrasound', 'usg', 'sonography', 'ultrasonography'];
     }
 
-    // Default — return words from test name as keywords
     return name.split(/[\s\/\(\)]+/).filter(w => w.length > 3);
   }
 
@@ -385,9 +379,9 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.analysisProgress = 'Reading prescription with OCR...';
+    this.analysisProgress = 'Reading prescription with AI...';
 
- const response = await fetch(`${environment.apiUrl}/prescription/ocr`, {
+    const response = await fetch(`${environment.apiUrl}/prescription/ocr`, {
       method: 'POST',
       body: formData
     });

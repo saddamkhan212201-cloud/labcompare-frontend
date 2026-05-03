@@ -1,6 +1,6 @@
 <div class="rx-page">
 
-  <!-- 
+  <!--
        STEP: CHOOSE MODE
    -->
   <div *ngIf="step === 'choose'" class="choose-screen">
@@ -29,7 +29,7 @@
         <h2>Upload File</h2>
         <p>Choose a saved photo or PDF of your prescription from your device</p>
         <div class="mode-formats">JPG · PNG · PDF · WEBP</div>
-        <button class="mode-btn">Select file </button>
+        <button class="mode-btn">Select file</button>
       </div>
 
       <!-- Camera card -->
@@ -43,10 +43,14 @@
         <h2>Take a Photo</h2>
         <p>Use your device camera to photograph the prescription directly</p>
         <div class="mode-formats">Best for physical prescriptions</div>
-        <button class="mode-btn">Open camera </button>
+        <button class="mode-btn">Open camera</button>
       </div>
 
     </div>
+
+    <!-- Hidden inputs here so ViewChild works from any step -->
+    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
+    <input #cameraInput type="file" accept="image/*" capture="environment" style="display:none" (change)="onCameraFileCaptured($event)" />
 
     <div class="rx-tips">
       <div class="tip-item">
@@ -62,7 +66,7 @@
   </div>
 
 
-  <!-- 
+  <!--
        STEP: UPLOAD FILE
    -->
   <div *ngIf="step === 'upload'" class="input-screen">
@@ -105,8 +109,6 @@
       </ng-container>
     </div>
 
-    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
-
     <!-- City filter -->
     <div class="city-row" *ngIf="selectedFile">
       <label>Filter results by city (optional)</label>
@@ -128,8 +130,8 @@
   </div>
 
 
-  <!-- 
-       STEP: CAMERA
+  <!--
+       STEP: CAMERA (desktop only)
    -->
   <div *ngIf="step === 'camera'" class="input-screen">
     <div class="screen-header">
@@ -143,7 +145,7 @@
         <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
       </svg>
       <p>{{ cameraError }}</p>
-      <button class="mode-btn" (click)="selectUpload()">Switch to Upload </button>
+      <button class="mode-btn" (click)="selectUpload()">Switch to Upload</button>
     </div>
 
     <!-- Live camera view -->
@@ -196,7 +198,7 @@
   </div>
 
 
-  <!-- 
+  <!--
        STEP: ANALYZING
    -->
   <div *ngIf="step === 'analyzing'" class="analyzing-screen">
@@ -239,7 +241,7 @@
   </div>
 
 
-  <!-- 
+  <!--
        STEP: RESULTS
    -->
   <div *ngIf="step === 'results'" class="results-screen">
@@ -292,7 +294,7 @@
       <div class="test-card-header" (click)="et.expanded = !et.expanded">
         <div class="tch-left">
           <span class="test-badge" [class.matched]="et.matched" [class.unknown]="!et.matched">
-            {{ et.matched ? '🧪' : '❓' }}
+            {{ et.matched ? '🧪' : '?' }}
           </span>
           <div>
             <div class="test-name">{{ et.matched ? et.matched.name : et.raw }}</div>
@@ -365,7 +367,7 @@
   </div>
 
 
-  <!-- 
+  <!--
        STEP: ERROR
    -->
   <div *ngIf="step === 'error'" class="error-screen">
