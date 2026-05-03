@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService, TestItem, PriceDTO } from '../../services/api.service';
-
+import { environment } from '../../../environments/environment';
 export interface ExtractedTest {
   raw: string;
   matched: TestItem | null;
@@ -387,7 +387,7 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
     this.analysisProgress = 'Reading prescription with OCR...';
 
-    const response = await fetch('http://localhost:8080/api/prescription/ocr', {
+ const response = await fetch(`${environment.apiUrl}/prescription/ocr`, {
       method: 'POST',
       body: formData
     });
