@@ -19,8 +19,8 @@ export class AuthService {
     return this.http.post<ApiResp<LoginResponse>>(`${this.base}/auth/login`, { username, password }).pipe(
       map(r => r.data),
       tap(data => {
-        localStorage.setItem(this.TOKEN_KEY, data.token);
-        localStorage.setItem(this.USER_KEY, JSON.stringify({
+        sessionStorage.setItem(this.TOKEN_KEY, data.token);
+        sessionStorage.setItem(this.USER_KEY, JSON.stringify({
           username: data.username,
           role: data.role,
           adminLabId: data.adminLabId ?? null
@@ -34,16 +34,16 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
   }
 
-  getToken(): string | null { return localStorage.getItem(this.TOKEN_KEY); }
+  getToken(): string | null { return sessionStorage.getItem(this.TOKEN_KEY); }
 
   isLoggedIn(): boolean { return !!this.getToken(); }
 
   private getUser(): any {
-    const u = localStorage.getItem(this.USER_KEY);
+    const u = sessionStorage.getItem(this.USER_KEY);
     return u ? JSON.parse(u) : null;
   }
 
