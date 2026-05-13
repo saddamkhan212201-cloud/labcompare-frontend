@@ -13,7 +13,7 @@ export interface ExtractedTest {
   expanded: boolean;
 }
 
-type Step = 'choose' | 'upload' | 'camera' | 'analyzing' | 'results' | 'error';
+type Step = 'choose' | 'upload' | 'camera' | 'analyzing' | 'results' | 'error' | 'sent';
 
 @Component({
   selector: 'app-prescription',
@@ -45,6 +45,13 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   analysisProgress = '';
   allTests: TestItem[] = [];
 
+  // ─── User details for prescription notification ───────────────────────────
+  userName = '';
+  userPhone = '';
+  sending = false;
+  nameError = '';
+  phoneError = '';
+
   constructor(private api: ApiService, private router: Router, private zone: NgZone) {}
 
   ngOnInit() {
@@ -58,7 +65,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   selectCamera() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
-      // On mobile, use native camera input directly — avoids getUserMedia issues
       setTimeout(() => this.cameraInputEl?.nativeElement.click(), 100);
     } else {
       this.step = 'camera';
@@ -68,7 +74,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Called when user picks a photo from native mobile camera input
   onCameraFileCaptured(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
@@ -79,11 +84,10 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     reader.onload = (e) => {
       this.zone.run(() => {
         this.previewUrl = e.target?.result as string;
-        this.step = 'upload'; // Show preview before analyzing
+        this.step = 'upload';
       });
     };
     reader.readAsDataURL(file);
-    // Reset input so same file can be selected again
     input.value = '';
   }
 
@@ -171,233 +175,84 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     return !!(this.selectedFile || this.capturedDataUrl);
   }
 
-  async analyzePrescription() {
-    if (!this.canAnalyze()) { return; }
-    this.stopCamera();
-    this.step = 'analyzing';
-    this.analysisProgress = 'Compressing image...';
+  // ─── Validate user details form ───────────────────────────────────────────
+  validateForm(): boolean {
+    this.nameError = '';
+    this.phoneError = '';
+    let valid = true;
+
+    if (!this.userName.trim()) {
+      this.nameError = 'Please enter your name';
+      valid = false;
+    }
+
+    if (!this.userPhone.trim()) {
+      this.phoneError = 'Please enter your phone number';
+      valid = false;
+    } else if (!/^[6-9]\d{9}$/.test(this.userPhone.trim())) {
+      this.phoneError = 'Please enter a valid 10-digit phone number';
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  // ─── Send prescription to team via email ──────────────────────────────────
+  async sendToTeam() {
+    if (!this.validateForm()) return;
+
+    if (!this.canAnalyze()) {
+      return;
+    }
+
+    this.sending = true;
 
     try {
-      const extractedText = await this.runOCR();
-      console.log('=== OCR RAW TEXT ===\n' + extractedText + '\n===================');
+      const formData = new FormData();
+      formData.append('userName', this.userName.trim());
+      formData.append('userPhone', this.userPhone.trim());
 
-      if (!extractedText || extractedText.trim().length < 3) {
-        this.showError('Could not read any text. Please try a clearer photo.');
-        return;
-      }
-
-      this.analysisProgress = 'Matching tests from database...';
-
-      const matched = this.dynamicMatch(extractedText);
-
-      console.log('Matched tests:', matched.map(t => t.name));
-
-      if (matched.length === 0) {
-        this.showError('No lab tests found. Raw text: "' + extractedText.substring(0, 200) + '"');
-        return;
-      }
-
-      this.doctorNotes = this.extractNotes(extractedText);
-      this.extractedTests = matched.map(test => ({
-        raw: test.name,
-        matched: test,
-        prices: [],
-        loading: true,
-        expanded: true
-      }));
-
-      this.step = 'results';
-      this.analysisProgress = '';
-
-      for (const et of this.extractedTests) {
-        if (et.matched) {
-          this.api.searchPrices(et.matched.id, this.cityFilter || undefined).subscribe({
-            next: p => this.zone.run(() => { et.prices = p; et.loading = false; }),
-            error: () => this.zone.run(() => { et.loading = false; })
-          });
-        }
-      }
-
-    } catch (err: any) {
-      this.showError(err?.message || 'Analysis failed. Please try again.');
-    }
-  }
-
-  private dynamicMatch(ocrText: string): TestItem[] {
-    const fullText = ocrText.toLowerCase();
-    const matched: TestItem[] = [];
-    const foundIds = new Set<number>();
-
-    for (const test of this.allTests) {
-      if (foundIds.has(test.id)) { continue; }
-
-      const testNameLower = test.name.toLowerCase();
-
-      if (fullText.includes(testNameLower)) {
-        matched.push(test);
-        foundIds.add(test.id);
-        continue;
-      }
-
-      const baseName = testNameLower.replace(/\(.*?\)/g, '').trim();
-      if (baseName.length > 2 && fullText.includes(baseName)) {
-        matched.push(test);
-        foundIds.add(test.id);
-        continue;
-      }
-
-      const abbrevMatch = test.name.match(/\(([^)]+)\)/);
-      if (abbrevMatch) {
-        const abbrev = abbrevMatch[1].toLowerCase();
-        if (abbrev.length >= 2 && fullText.includes(abbrev)) {
-          matched.push(test);
-          foundIds.add(test.id);
-          continue;
-        }
-      }
-
-      const category = test.category.toLowerCase();
-      if (category.length > 3 && fullText.includes(category)) {
-        const specificCategories = ['thyroid', 'dengue', 'radiology', 'pathology'];
-        if (specificCategories.includes(category)) {
-          matched.push(test);
-          foundIds.add(test.id);
-          continue;
-        }
-      }
-
-      const aliases = this.getAliases(test.name);
-      for (const alias of aliases) {
-        if (alias.length >= 3 && fullText.includes(alias)) {
-          matched.push(test);
-          foundIds.add(test.id);
-          break;
-        }
-      }
-    }
-
-    return matched;
-  }
-
-  private getAliases(testName: string): string[] {
-    const name = testName.toLowerCase();
-
-    if (name.includes('complete blood') || name.includes('cbc')) {
-      return ['cbc', 'cbp', 'haemogram', 'hemogram', 'haemoglobin', 'hemoglobin', 'complete blood count'];
-    }
-    if (name.includes('thyroid')) {
-      return ['thyroid', 'tft', 'tsh', 't3', 't4', 'tyrode', 'thyro', 'thyroid profile'];
-    }
-    if (name.includes('liver')) {
-      return ['lft', 'liver function', 'sgot', 'sgpt', 'bilirubin', 'liver func'];
-    }
-    if (name.includes('kidney')) {
-      return ['kft', 'rft', 'kidney function', 'renal function', 'creatinine', 'kidney func'];
-    }
-    if (name.includes('lipid')) {
-      return ['lipid', 'cholesterol', 'triglyceride', 'lipid profile', 'hdl', 'ldl'];
-    }
-    if (name.includes('hba1c') || name.includes('diabetes')) {
-      return ['hba1c', 'hb a1c', 'glycated', 'glycosylated', 'hbaic', 'hbalc', 'blood sugar', 'fasting'];
-    }
-    if (name.includes('vitamin d')) {
-      return ['vitamin d', 'vit d', 'vitd', '25-oh', '25 oh', 'vit. d'];
-    }
-    if (name.includes('vitamin b12') || name.includes('b12')) {
-      return ['vitamin b12', 'vit b12', 'b12', 'b12 level', 'cyanocobalamin'];
-    }
-    if (name.includes('urine')) {
-      return ['urine', 'urine routine', 'urine r/m', 'urine rm', 'urinalysis', 'urin', 'usin'];
-    }
-    if (name.includes('dengue')) {
-      return ['dengue', 'ns1', 'dengue ns1', 'dengu'];
-    }
-    if (name.includes('covid') || name.includes('rt-pcr')) {
-      return ['covid', 'rt-pcr', 'rtpcr', 'sars-cov', 'corona'];
-    }
-    if (name.includes('brain') && name.includes('mri')) {
-      return ['mri brain', 'brain mri', 'mri of brain', 'brain mri plain', 'mri head'];
-    }
-    if (name.includes('bone marrow')) {
-      return ['bone marrow', 'bone marrow examination', 'bone marrow biopsy', 'marrow examination', 'bma', 'bmt'];
-    }
-    if (name.includes('esr')) {
-      return ['esr', 'erythrocyte sedimentation', 'sedimentation rate'];
-    }
-    if (name.includes('ecg') || name.includes('electrocardiogram')) {
-      return ['ecg', 'ekg', 'electrocardiogram', 'echocardiogram'];
-    }
-    if (name.includes('x-ray') || name.includes('xray')) {
-      return ['x-ray', 'xray', 'x ray', 'radiograph'];
-    }
-    if (name.includes('ct scan') || name.includes('ct')) {
-      return ['ct scan', 'ct', 'computed tomography', 'cat scan'];
-    }
-    if (name.includes('ultrasound')) {
-      return ['ultrasound', 'usg', 'sonography', 'ultrasonography'];
-    }
-
-    return name.split(/[\s\/\(\)]+/).filter(w => w.length > 3);
-  }
-
-  private extractNotes(ocrText: string): string {
-    const notePatterns: RegExp[] = [
-      /dr\.?\s+[a-z\s]+/i,
-      /hospital/i,
-      /clinic/i,
-      /date[\s:]+[\d\/\-]+/i,
-    ];
-    const lines = ocrText.split(/[\n\r]+/);
-    const noteLines: string[] = [];
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.length > 2 && notePatterns.some(p => p.test(trimmed))) {
-        noteLines.push(trimmed);
-        if (noteLines.length >= 2) { break; }
-      }
-    }
-    return noteLines.join(' | ');
-  }
-
-  private async runOCR(): Promise<string> {
-    const formData = new FormData();
-
-    if (this.capturedDataUrl) {
-      const res = await fetch(this.capturedDataUrl);
-      const blob = await res.blob();
-      const compressed = await this.compressBlob(blob);
-      formData.append('file', compressed, 'prescription.jpg');
-    } else if (this.selectedFile) {
-      if (this.selectedFile.type.startsWith('image/')) {
-        const dataUrl = await this.toDataUrl(this.selectedFile);
-        const res = await fetch(dataUrl);
+      if (this.capturedDataUrl) {
+        const res = await fetch(this.capturedDataUrl);
         const blob = await res.blob();
         const compressed = await this.compressBlob(blob);
-        formData.append('file', compressed, this.selectedFile.name);
-      } else {
-        formData.append('file', this.selectedFile, this.selectedFile.name);
+        formData.append('file', compressed, 'prescription.jpg');
+      } else if (this.selectedFile) {
+        if (this.selectedFile.type.startsWith('image/')) {
+          const dataUrl = await this.toDataUrl(this.selectedFile);
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const compressed = await this.compressBlob(blob);
+          formData.append('file', compressed, this.selectedFile.name);
+        } else {
+          // PDF - send as is
+          formData.append('file', this.selectedFile, this.selectedFile.name);
+        }
       }
+
+      const response = await fetch(`${environment.apiUrl}/prescription/notify`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err || 'Server error');
+      }
+
+      this.zone.run(() => {
+        this.step = 'sent';
+      });
+
+    } catch (err: any) {
+      this.zone.run(() => {
+        this.showError('Failed to send prescription. Please try again or call us directly.');
+      });
+    } finally {
+      this.zone.run(() => {
+        this.sending = false;
+      });
     }
-
-    this.analysisProgress = 'Reading prescription with AI...';
-
-    const response = await fetch(`${environment.apiUrl}/prescription/ocr`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error('OCR error ' + response.status + ': ' + errText);
-    }
-
-    const data = await response.json();
-
-    if (data.IsErroredOnProcessing) {
-      throw new Error('OCR error: ' + (data.ErrorMessage?.[0] || 'Processing failed'));
-    }
-
-    return (data.ParsedResults || []).map((r: any) => r.ParsedText || '').join('\n');
   }
 
   private compressBlob(blob: Blob): Promise<Blob> {
@@ -412,7 +267,7 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         canvas.width  = Math.round(img.width  * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(b => { resolve(b!); }, 'image/jpeg', 0.75);
+        canvas.toBlob(b => { resolve(b!); }, 'image/jpeg', 0.80);
       };
       img.src = url;
     });
@@ -427,21 +282,9 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     });
   }
 
-  onCityChange() {
-    for (const et of this.extractedTests) {
-      if (et.matched) {
-        et.loading = true;
-        this.api.searchPrices(et.matched.id, this.cityFilter || undefined).subscribe({
-          next: p => this.zone.run(() => { et.prices = p; et.loading = false; }),
-          error: () => this.zone.run(() => { et.loading = false; })
-        });
-      }
-    }
-  }
-
   goBack() {
     this.stopCamera();
-    if (this.step === 'results' || this.step === 'error') {
+    if (this.step === 'results' || this.step === 'error' || this.step === 'sent') {
       this.reset();
     } else {
       this.step = 'choose';
@@ -464,6 +307,11 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     this.doctorNotes = '';
     this.cameraReady = false;
     this.cameraError = '';
+    this.userName = '';
+    this.userPhone = '';
+    this.nameError = '';
+    this.phoneError = '';
+    this.sending = false;
   }
 
   private showError(msg: string) {
@@ -502,5 +350,17 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
   bookNow(price: PriceDTO) {
     this.router.navigate(['/book'], { state: { price: price } });
+  }
+
+  onCityChange() {
+    for (const et of this.extractedTests) {
+      if (et.matched) {
+        et.loading = true;
+        this.api.searchPrices(et.matched.id, this.cityFilter || undefined).subscribe({
+          next: p => this.zone.run(() => { et.prices = p; et.loading = false; }),
+          error: () => this.zone.run(() => { et.loading = false; })
+        });
+      }
+    }
   }
 }

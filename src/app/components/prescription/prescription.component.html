@@ -1,6 +1,6 @@
 <div class="rx-page">
 
-  <!--
+  <!-- 
        STEP: CHOOSE MODE
    -->
   <div *ngIf="step === 'choose'" class="choose-screen">
@@ -13,7 +13,7 @@
         </svg>
       </div>
       <h1>Prescription Scanner</h1>
-      <p>Upload or photo your doctor's prescription - our AI reads it and shows you the best lab prices instantly</p>
+      <p>Upload or photo your doctor's prescription — our team will review it and call you with the best lab prices</p>
     </div>
 
     <div class="mode-cards">
@@ -48,10 +48,6 @@
 
     </div>
 
-    <!-- Hidden inputs here so ViewChild works from any step -->
-    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
-    <input #cameraInput type="file" accept="image/*" capture="environment" style="display:none" (change)="onCameraFileCaptured($event)" />
-
     <div class="rx-tips">
       <div class="tip-item">
         <span>💡</span> Make sure test names written by the doctor are clearly visible
@@ -60,19 +56,50 @@
         <span>💡</span> Good lighting and sharp focus give the most accurate results
       </div>
       <div class="tip-item">
-        <span>🔒</span> Your prescription is never stored - analyzed privately in real-time
+        <span>📞</span> Our team will call you back within 30 minutes during working hours
+      </div>
+      <div class="tip-item">
+        <span>🔒</span> Your prescription is kept private and secure
       </div>
     </div>
   </div>
 
 
-  <!--
+  <!-- 
        STEP: UPLOAD FILE
    -->
   <div *ngIf="step === 'upload'" class="input-screen">
     <div class="screen-header">
       <button class="back-btn" (click)="goBack()">← Back</button>
       <h2>Upload Prescription</h2>
+    </div>
+
+    <!-- User Details Form -->
+    <div class="user-details-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Your Name <span class="req">*</span></label>
+          <input
+            [(ngModel)]="userName"
+            placeholder="Enter your full name"
+            [class.input-error]="nameError"
+            (input)="nameError = ''"
+          />
+          <span class="field-error" *ngIf="nameError">{{ nameError }}</span>
+        </div>
+        <div class="form-group">
+          <label>Phone Number <span class="req">*</span></label>
+          <input
+            [(ngModel)]="userPhone"
+            placeholder="Enter 10-digit phone number"
+            type="tel"
+            maxlength="10"
+            [class.input-error]="phoneError"
+            (input)="phoneError = ''"
+          />
+          <span class="field-error" *ngIf="phoneError">{{ phoneError }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Drop zone -->
@@ -109,34 +136,68 @@
       </ng-container>
     </div>
 
-    <!-- City filter -->
-    <div class="city-row" *ngIf="selectedFile">
-      <label>Filter results by city (optional)</label>
-      <div class="city-input">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
-          <circle cx="12" cy="10" r="3"/>
-        </svg>
-        <input [(ngModel)]="cityFilter" placeholder="e.g. Mumbai, Delhi..." />
-      </div>
-    </div>
+    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
 
-    <button class="analyze-btn" *ngIf="selectedFile" (click)="analyzePrescription()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    <!-- Send to Team Button -->
+    <button
+      class="analyze-btn"
+      *ngIf="selectedFile"
+      (click)="sendToTeam()"
+      [disabled]="sending">
+      <svg *ngIf="!sending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/>
       </svg>
-      Analyze Prescription
+      <span class="btn-spinner" *ngIf="sending"></span>
+      {{ sending ? 'Sending...' : 'Send to Team' }}
     </button>
+
+    <!-- Hidden camera input for mobile -->
+    <input
+      #cameraInput
+      type="file"
+      accept="image/*"
+      capture="environment"
+      style="display:none"
+      (change)="onCameraFileCaptured($event)"
+    />
   </div>
 
 
-  <!--
-       STEP: CAMERA (desktop only)
+  <!-- 
+       STEP: CAMERA
    -->
   <div *ngIf="step === 'camera'" class="input-screen">
     <div class="screen-header">
       <button class="back-btn" (click)="goBack()">← Back</button>
       <h2>Take Photo</h2>
+    </div>
+
+    <!-- User Details Form for camera mode -->
+    <div class="user-details-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Your Name <span class="req">*</span></label>
+          <input
+            [(ngModel)]="userName"
+            placeholder="Enter your full name"
+            [class.input-error]="nameError"
+            (input)="nameError = ''"
+          />
+          <span class="field-error" *ngIf="nameError">{{ nameError }}</span>
+        </div>
+        <div class="form-group">
+          <label>Phone Number <span class="req">*</span></label>
+          <input
+            [(ngModel)]="userPhone"
+            placeholder="Enter 10-digit phone number"
+            type="tel"
+            maxlength="10"
+            [class.input-error]="phoneError"
+            (input)="phoneError = ''"
+          />
+          <span class="field-error" *ngIf="phoneError">{{ phoneError }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Camera error -->
@@ -179,201 +240,55 @@
           Retake
         </button>
 
-        <div class="city-input">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
-            <circle cx="12" cy="10" r="3"/>
+        <button class="analyze-btn" (click)="sendToTeam()" [disabled]="sending">
+          <svg *ngIf="!sending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/>
           </svg>
-          <input [(ngModel)]="cityFilter" placeholder="Filter by city..." />
-        </div>
-
-        <button class="analyze-btn" (click)="analyzePrescription()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          Analyze
+          <span class="btn-spinner" *ngIf="sending"></span>
+          {{ sending ? 'Sending...' : 'Send to Team' }}
         </button>
       </div>
     </div>
   </div>
 
 
-  <!--
-       STEP: ANALYZING
+  <!-- 
+       STEP: SENT ✅
    -->
-  <div *ngIf="step === 'analyzing'" class="analyzing-screen">
-    <div class="analyzing-card">
-      <div class="scanning-animation">
-        <div class="scan-doc">
-          <div *ngIf="previewUrl" class="scan-preview">
-            <img [src]="previewUrl" alt="Prescription" />
-          </div>
-          <div *ngIf="!previewUrl" class="scan-placeholder">
-            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M12 44h24a4 4 0 004-4V16L28 4H12a4 4 0 00-4 4v32a4 4 0 004 4z"/>
-              <path d="M28 4v12h12M18 26h12M18 32h8"/>
-            </svg>
-          </div>
-          <div class="scan-beam"></div>
+  <div *ngIf="step === 'sent'" class="sent-screen">
+    <div class="sent-card">
+      <div class="sent-icon">✅</div>
+      <h2>Prescription Sent!</h2>
+      <p class="sent-main">Our team will call you shortly on</p>
+      <div class="sent-phone">📞 {{ userPhone }}</div>
+      <p class="sent-sub">We usually respond within <strong>30 minutes</strong> during working hours (9 AM – 8 PM).</p>
+      <div class="sent-info">
+        <div class="sent-info-row">
+          <span>👤 Name</span>
+          <span>{{ userName }}</span>
+        </div>
+        <div class="sent-info-row">
+          <span>📞 Phone</span>
+          <span>{{ userPhone }}</span>
         </div>
       </div>
-      <h2>Reading your prescription...</h2>
-      <p class="progress-msg">{{ analysisProgress }}</p>
-      <div class="progress-steps">
-        <div class="ps-item done">
-          <span class="ps-dot"></span>
-          <span>Image received</span>
-        </div>
-        <div class="ps-item" [class.active]="analysisProgress.includes('AI')">
-          <span class="ps-dot"></span>
-          <span>AI reading prescription</span>
-        </div>
-        <div class="ps-item" [class.active]="analysisProgress.includes('Matching')">
-          <span class="ps-dot"></span>
-          <span>Matching tests to catalog</span>
-        </div>
-        <div class="ps-item">
-          <span class="ps-dot"></span>
-          <span>Fetching lab prices</span>
-        </div>
-      </div>
+      <button class="analyze-btn" (click)="reset()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12l7-7 7 7"/>
+        </svg>
+        Send Another Prescription
+      </button>
     </div>
   </div>
 
 
-  <!--
-       STEP: RESULTS
-   -->
-  <div *ngIf="step === 'results'" class="results-screen">
-
-    <!-- Summary bar -->
-    <div class="results-bar">
-      <div class="results-stats">
-        <div class="rs-stat">
-          <span class="rs-num">{{ extractedTests.length }}</span>
-          <span class="rs-label">Tests found</span>
-        </div>
-        <div class="rs-stat" *ngIf="matchedCount > 0">
-          <span class="rs-num">{{ matchedCount }}</span>
-          <span class="rs-label">Matched in catalog</span>
-        </div>
-        <div class="rs-stat highlight" *ngIf="totalMinCost > 0">
-          <span class="rs-num">₹{{ totalMinCost | number:'1.0-0' }}</span>
-          <span class="rs-label">Min total cost</span>
-        </div>
-      </div>
-
-      <div class="results-controls">
-        <div class="city-input small">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-          <input [(ngModel)]="cityFilter" (ngModelChange)="onCityChange()" placeholder="Filter by city..." />
-        </div>
-        <select [(ngModel)]="sortBy" class="sort-sel">
-          <option value="price-asc">Price ↑</option>
-          <option value="price-desc">Price ↓</option>
-          <option value="rating">Best rated</option>
-          <option value="name">Lab name</option>
-        </select>
-        <button class="new-scan-btn" (click)="reset()">New scan</button>
-      </div>
-    </div>
-
-    <!-- Doctor notes -->
-    <div class="doctor-notes" *ngIf="doctorNotes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 12h6m-6 4h6M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
-      </svg>
-      <span><strong>Doctor notes:</strong> {{ doctorNotes }}</span>
-    </div>
-
-    <!-- Test result cards -->
-    <div *ngFor="let et of extractedTests" class="test-card">
-      <div class="test-card-header" (click)="et.expanded = !et.expanded">
-        <div class="tch-left">
-          <span class="test-badge" [class.matched]="et.matched" [class.unknown]="!et.matched">
-            {{ et.matched ? '🧪' : '?' }}
-          </span>
-          <div>
-            <div class="test-name">{{ et.matched ? et.matched.name : et.raw }}</div>
-            <div class="test-cat" *ngIf="et.matched">{{ et.matched.category }}</div>
-            <div class="test-cat warn" *ngIf="!et.matched">Not in our catalog - search manually</div>
-          </div>
-        </div>
-        <div class="tch-right">
-          <span class="lab-count" *ngIf="et.prices.length > 0">{{ et.prices.length }} labs</span>
-          <span class="from-price" *ngIf="et.prices.length > 0">from ₹{{ lowestPrice(et.prices) | number:'1.0-0' }}</span>
-          <span class="chevron" [class.open]="et.expanded">▾</span>
-        </div>
-      </div>
-
-      <div class="test-card-body" *ngIf="et.expanded">
-
-        <!-- Loading skeletons -->
-        <div *ngIf="et.loading" class="skeletons">
-          <div class="skel" *ngFor="let i of [1,2,3]"></div>
-        </div>
-
-        <!-- Unmatched -->
-        <div *ngIf="!et.matched && !et.loading" class="unmatched-msg">
-          <p>This test wasn't found in our database. Try searching on the <a routerLink="/search">Compare Tests</a> page.</p>
-        </div>
-
-        <!-- Lab price rows -->
-        <div *ngFor="let p of sortedPrices(et.prices)"
-             class="lab-row"
-             [class.best-price]="p.effectivePrice === lowestPrice(et.prices)">
-          <div class="lr-left">
-            <div class="lab-av">{{ getInitials(p.labName) }}</div>
-            <div class="lab-details">
-              <div class="lab-name-row">
-                <span class="lab-nm">{{ p.labName }}</span>
-                <span class="tag lowest" *ngIf="p.effectivePrice === lowestPrice(et.prices)">Lowest</span>
-                <span class="tag accred">{{ p.labAccreditation }}</span>
-              </div>
-              <div class="lab-meta">
-                <span class="stars">
-                  <ng-container *ngFor="let s of [1,2,3,4,5]">
-                    <span [class.on]="s <= p.labRating">★</span>
-                  </ng-container>
-                  {{ p.labRating }}
-                </span>
-                <span class="sep">•</span>
-                <span>{{ p.labCity }}</span>
-                <span class="sep">•</span>
-                <span>{{ p.reportDuration }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="lr-right">
-            <div class="price-col">
-              <span class="eff">₹{{ p.effectivePrice | number:'1.0-0' }}</span>
-              <span class="orig" *ngIf="p.discountPercent > 0">₹{{ p.price | number:'1.0-0' }}</span>
-              <span class="disc" *ngIf="p.discountPercent > 0">{{ p.discountPercent }}% off</span>
-            </div>
-            <button class="book-btn" (click)="bookNow(p)">Book Now</button>
-          </div>
-        </div>
-
-        <!-- Empty -->
-        <div *ngIf="!et.loading && et.matched && et.prices.length === 0" class="empty-lab">
-          No labs found for this city.
-          <button class="link-btn" (click)="cityFilter = ''; onCityChange()">Clear city filter</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!--
+  <!-- 
        STEP: ERROR
    -->
   <div *ngIf="step === 'error'" class="error-screen">
     <div class="error-card">
       <div class="err-icon">⚠️</div>
-      <h3>Could not read prescription</h3>
+      <h3>Something went wrong</h3>
       <p>{{ errorMsg }}</p>
       <div class="err-actions">
         <button class="analyze-btn" (click)="goBack()">Try again</button>
