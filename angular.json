@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "labcompare-frontend": {
+    "LabChain-frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -39,7 +39,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/labcompare-frontend",
+            "outputPath": "dist/LabChain-frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -90,10 +90,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "labcompare-frontend:build:production"
+              "buildTarget": "LabChain-frontend:build:production"
             },
             "development": {
-              "buildTarget": "labcompare-frontend:build:development"
+              "buildTarget": "LabChain-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -101,7 +101,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "labcompare-frontend:build"
+            "buildTarget": "LabChain-frontend:build"
           }
         },
         "test": {
