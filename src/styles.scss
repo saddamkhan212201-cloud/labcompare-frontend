@@ -1,3 +1,11 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f7f7f7; color: #222; line-height: 1.5; }
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+  background: #f7f7f7; 
+  color: #222; 
+  line-height: 1.5; 
+  -webkit-text-size-adjust: 100%;
+}
 .main-content { min-height: calc(100vh - 60px); }
+img { max-width: 100%; height: auto; }
+input, select, textarea, button { font-family: inherit; }

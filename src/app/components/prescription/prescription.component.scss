@@ -1,521 +1,181 @@
-// ─── Variables ────────────────────────────────────────────────────────────────
-$primary:      #6c63ff;
-$primary-d:    #5a52d5;
-$success:      #10b981;
-$warning:      #f59e0b;
-$danger:       #ef4444;
-$text:         #1a1a2e;
-$muted:        #6b7280;
-$border:       #e5e7eb;
-$card:         #ffffff;
-$radius:       14px;
-$shadow:       0 2px 18px rgba(0,0,0,0.07);
+$primary:   #6c63ff;
+$primary-d: #5a52d5;
+$success:   #10b981;
+$danger:    #ef4444;
+$text:      #1a1a2e;
+$muted:     #6b7280;
+$border:    #e5e7eb;
+$card:      #ffffff;
+$radius:    14px;
+$shadow:    0 2px 18px rgba(0,0,0,0.07);
 
-// ─── Page wrapper ──────────────────────────────────────────────────────────────
-.rx-page {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 28px 16px 80px;
-}
+.rx-page { max-width: 860px; margin: 0 auto; padding: 20px 12px 60px; }
 
-// ─── CHOOSE SCREEN ─────────────────────────────────────────────────────────────
+// ── CHOOSE SCREEN
 .choose-screen { text-align: center; }
 
 .rx-hero {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
   .rx-hero-icon {
-    width: 72px; height: 72px;
+    width: 64px; height: 64px;
     background: linear-gradient(135deg, $primary, #a78bfa);
-    border-radius: 18px;
+    border-radius: 16px;
     display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 18px;
-    svg { width: 38px; height: 38px; stroke: white; }
+    margin: 0 auto 14px;
+    svg { width: 32px; height: 32px; stroke: white; }
   }
-  h1 { font-size: 2rem; margin: 0 0 10px; color: $text; }
-  p  { color: $muted; font-size: 1rem; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; color: $text; }
+  p  { color: $muted; font-size: 0.93rem; max-width: 420px; margin: 0 auto; line-height: 1.5; }
 }
 
 .mode-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  max-width: 600px;
-  margin: 0 auto 32px;
-
-  @media (max-width: 540px) { grid-template-columns: 1fr; }
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  max-width: 560px; margin: 0 auto 28px;
 }
 
 .mode-card {
-  background: $card;
-  border: 2px solid $border;
-  border-radius: $radius;
-  padding: 28px 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-
-  &:hover {
-    border-color: $primary;
-    box-shadow: 0 4px 20px rgba($primary, 0.15);
-    transform: translateY(-3px);
-  }
-
-  h2  { margin: 0; font-size: 1.15rem; color: $text; }
-  p   { margin: 0; font-size: 0.87rem; color: $muted; }
-
-  .mode-formats {
-    font-size: 0.78rem;
-    color: $primary;
-    background: #ede9fe;
-    border-radius: 20px;
-    padding: 3px 12px;
-    margin-top: 4px;
-  }
+  background: $card; border: 2px solid $border; border-radius: $radius;
+  padding: 24px 18px; cursor: pointer; transition: all 0.2s;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  &:hover { border-color: $primary; box-shadow: 0 4px 20px rgba($primary, 0.15); transform: translateY(-2px); }
+  h2  { margin: 0; font-size: 1.05rem; color: $text; }
+  p   { margin: 0; font-size: 0.83rem; color: $muted; line-height: 1.4; }
+  .mode-formats { font-size: 0.75rem; color: $primary; background: #ede9fe; border-radius: 20px; padding: 3px 10px; margin-top: 4px; }
 }
 
 .mode-icon {
-  width: 56px; height: 56px;
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 6px;
-  svg { width: 28px; height: 28px; }
-
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+  svg { width: 26px; height: 26px; }
   &.upload-icon { background: #e0f2fe; svg { stroke: #0369a1; } }
   &.camera-icon { background: #fce7f3; svg { stroke: #9d174d; } }
 }
 
 .mode-btn {
-  background: $primary;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 20px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 6px;
-  transition: background 0.2s;
+  background: $primary; color: white; border: none;
+  border-radius: 8px; padding: 9px 18px; font-size: 0.85rem;
+  font-weight: 600; cursor: pointer; margin-top: 4px; transition: background 0.2s;
   &:hover { background: $primary-d; }
 }
 
 .rx-tips {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-
-  .tip-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: $muted;
-    span { font-size: 1rem; }
-  }
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  .tip-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.83rem; color: $muted; text-align: left; max-width: 360px; span { font-size: 1rem; flex-shrink: 0; margin-top: 1px; } }
 }
 
-// ─── INPUT SCREEN ──────────────────────────────────────────────────────────────
-.input-screen {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.screen-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  h2 { margin: 0; font-size: 1.3rem; color: $text; }
-}
-
+// ── INPUT SCREEN
+.input-screen { display: flex; flex-direction: column; gap: 16px; }
+.screen-header { display: flex; align-items: center; gap: 12px; h2 { margin: 0; font-size: 1.2rem; color: $text; } }
 .back-btn {
-  background: none;
-  border: 1.5px solid $border;
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-size: 0.88rem;
-  cursor: pointer;
-  color: $muted;
-  transition: all 0.2s;
+  background: none; border: 1.5px solid $border; border-radius: 8px;
+  padding: 7px 12px; font-size: 0.85rem; cursor: pointer; color: $muted;
+  transition: all 0.2s; white-space: nowrap;
   &:hover { border-color: $primary; color: $primary; }
 }
 
-// ─── USER DETAILS FORM ────────────────────────────────────────────────────────
 .user-details-form {
-  background: white;
-  border: 1.5px solid $border;
-  border-radius: $radius;
-  padding: 20px 24px;
-  box-shadow: $shadow;
-
-  .form-row {
-    display: flex;
-    gap: 16px;
-    @media (max-width: 540px) { flex-direction: column; }
-  }
-
+  background: white; border: 1.5px solid $border; border-radius: $radius;
+  padding: 16px 18px; box-shadow: $shadow;
+  .form-row { display: flex; gap: 14px; }
   .form-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-
-    label {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: #374151;
-    }
-
+    flex: 1; display: flex; flex-direction: column; gap: 5px;
+    label { font-size: 0.85rem; font-weight: 600; color: #374151; }
     .req { color: $danger; margin-left: 2px; }
-
     input {
-      border: 1.5px solid $border;
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 0.92rem;
-      outline: none;
-      transition: border-color 0.2s;
-      background: #fafafa;
-
+      border: 1.5px solid $border; border-radius: 10px;
+      padding: 11px 13px; font-size: 16px; outline: none;
+      transition: border-color 0.2s; background: #fafafa; width: 100%;
       &:focus { border-color: $primary; background: white; }
       &.input-error { border-color: $danger; background: #fff5f5; }
       &::placeholder { color: #aaa; }
     }
-
-    .field-error {
-      font-size: 0.78rem;
-      color: $danger;
-      margin-top: 2px;
-    }
+    .field-error { font-size: 0.76rem; color: $danger; margin-top: 2px; }
   }
 }
 
-// ─── DROP ZONE ────────────────────────────────────────────────────────────────
+// ── DROP ZONE
 .drop-zone {
-  border: 2.5px dashed $border;
-  border-radius: $radius;
-  background: $card;
-  padding: 48px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  min-height: 220px;
-  justify-content: center;
-
-  &:hover, &.drag-over {
-    border-color: $primary;
-    background: #f8f7ff;
-  }
+  border: 2.5px dashed $border; border-radius: $radius; background: $card;
+  padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  min-height: 200px; justify-content: center;
+  &:hover, &.drag-over { border-color: $primary; background: #f8f7ff; }
   &.has-file { border-style: solid; border-color: $success; background: #f0fdf4; }
-
   .dz-upload-icon {
-    width: 60px; height: 60px;
-    background: #ede9fe;
-    border-radius: 50%;
+    width: 56px; height: 56px; background: #ede9fe; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    svg { width: 30px; height: 30px; stroke: $primary; }
+    svg { width: 28px; height: 28px; stroke: $primary; }
   }
-
-  .dz-title  { font-size: 1.05rem; font-weight: 600; color: $text; margin: 0; }
-  .dz-hint   { font-size: 0.88rem; color: $muted; margin: 0; }
-  .dz-formats { font-size: 0.8rem; color: $muted; }
+  .dz-title  { font-size: 1rem; font-weight: 600; color: $text; margin: 0; }
+  .dz-hint   { font-size: 0.85rem; color: $muted; margin: 0; }
+  .dz-formats { font-size: 0.78rem; color: $muted; }
 }
 
-.file-preview-img {
-  max-height: 260px;
-  max-width: 100%;
-  border-radius: 10px;
-  object-fit: contain;
-}
+.file-preview-img { max-height: 240px; max-width: 100%; border-radius: 10px; object-fit: contain; }
+.pdf-icon-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; svg { width: 48px; height: 48px; stroke: $primary; } span { font-size: 0.88rem; font-weight: 500; color: $text; word-break: break-all; } }
+.change-hint { font-size: 0.8rem; color: $muted; margin: 0; }
 
-.pdf-icon-wrap {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  svg { width: 52px; height: 52px; stroke: $primary; }
-  span { font-size: 0.9rem; font-weight: 500; color: $text; }
-}
-
-.change-hint { font-size: 0.82rem; color: $muted; margin: 0; }
-
-// ─── SEND BUTTON ──────────────────────────────────────────────────────────────
+// ── SEND BUTTON
 .analyze-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+  display: inline-flex; align-items: center; gap: 10px;
   background: linear-gradient(135deg, $primary, #a78bfa);
-  color: white;
-  border: none;
-  padding: 14px 36px;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: white; border: none; padding: 13px 32px;
+  border-radius: 12px; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
   box-shadow: 0 4px 14px rgba($primary, 0.3);
-  align-self: center;
-
-  svg { width: 20px; height: 20px; stroke: white; }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba($primary, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-  }
+  align-self: center; -webkit-tap-highlight-color: transparent;
+  svg { width: 18px; height: 18px; stroke: white; }
+  &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba($primary, 0.4); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 }
+.btn-spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
 
-.btn-spinner {
-  width: 18px; height: 18px;
-  border: 2.5px solid rgba(255,255,255,0.4);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-}
-
-// ─── CAMERA ───────────────────────────────────────────────────────────────────
-.camera-wrap {
-  position: relative;
-  background: #000;
-  border-radius: $radius;
-  overflow: hidden;
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.camera-video {
-  width: 100%;
-  max-height: 480px;
-  display: block;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.4s;
-  &.ready { opacity: 1; }
-}
-
-.camera-loading {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: white;
-  p { margin: 0; font-size: 0.9rem; }
-}
-
-.spinner {
-  width: 36px; height: 36px;
-  border: 3px solid rgba(255,255,255,0.2);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
+// ── CAMERA
+.camera-wrap { position: relative; background: #000; border-radius: $radius; overflow: hidden; min-height: 260px; display: flex; align-items: center; justify-content: center; }
+.camera-video { width: 100%; max-height: 420px; display: block; object-fit: cover; opacity: 0; transition: opacity 0.4s; &.ready { opacity: 1; } }
+.camera-loading { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 12px; color: white; p { margin: 0; font-size: 0.9rem; } }
+.spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.camera-guide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; .guide-frame { width: 82%; height: 68%; border: 2.5px solid rgba(255,255,255,0.7); border-radius: 12px; box-shadow: 0 0 0 2000px rgba(0,0,0,0.35); } .guide-hint { margin: 10px 0 0; color: white; font-size: 0.85rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8); } }
+.capture-btn { display: block; margin: 14px auto; width: 66px; height: 66px; border-radius: 50%; border: 4px solid $primary; background: white; cursor: pointer; position: relative; transition: all 0.15s; -webkit-tap-highlight-color: transparent; .capture-ring { position: absolute; inset: 4px; background: $primary; border-radius: 50%; display: block; } &:hover .capture-ring { background: $primary-d; } &:active { transform: scale(0.93); } }
+.capture-hint { text-align: center; font-size: 0.85rem; color: $muted; margin: 0; }
+.camera-error { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: $radius; padding: 20px; text-align: center; svg { width: 30px; height: 30px; stroke: $danger; margin-bottom: 10px; } p { color: $danger; margin: 0 0 14px; font-size: 0.9rem; } }
+.captured-wrap { display: flex; flex-direction: column; gap: 14px; }
+.captured-img { width: 100%; max-height: 320px; object-fit: contain; border-radius: $radius; border: 1.5px solid $border; }
+.captured-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.retake-btn { display: inline-flex; align-items: center; gap: 7px; border: 1.5px solid $border; background: white; color: $muted; border-radius: 10px; padding: 11px 16px; font-size: 0.88rem; cursor: pointer; svg { width: 15px; height: 15px; } &:hover { border-color: $primary; color: $primary; } }
 
-.camera-guide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-
-  .guide-frame {
-    width: 80%;
-    height: 70%;
-    border: 2.5px solid rgba(255,255,255,0.7);
-    border-radius: 12px;
-    box-shadow: 0 0 0 2000px rgba(0,0,0,0.35);
-  }
-
-  .guide-hint {
-    margin: 12px 0 0;
-    color: white;
-    font-size: 0.88rem;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-  }
-}
-
-.capture-btn {
-  display: block;
-  margin: 16px auto;
-  width: 68px; height: 68px;
-  border-radius: 50%;
-  border: 4px solid $primary;
-  background: white;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.15s;
-
-  .capture-ring {
-    position: absolute;
-    inset: 4px;
-    background: $primary;
-    border-radius: 50%;
-    display: block;
-  }
-
-  &:hover .capture-ring { background: $primary-d; }
-  &:active { transform: scale(0.93); }
-}
-
-.capture-hint {
-  text-align: center;
-  font-size: 0.85rem;
-  color: $muted;
-  margin: 0;
-}
-
-.camera-error {
-  background: #fef2f2;
-  border: 1.5px solid #fecaca;
-  border-radius: $radius;
-  padding: 24px;
-  text-align: center;
-  svg { width: 32px; height: 32px; stroke: $danger; margin-bottom: 10px; }
-  p { color: $danger; margin: 0 0 16px; font-size: 0.93rem; }
-}
-
-.captured-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.captured-img {
-  width: 100%;
-  max-height: 340px;
-  object-fit: contain;
-  border-radius: $radius;
-  border: 1.5px solid $border;
-}
-
-.captured-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.retake-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border: 1.5px solid $border;
-  background: white;
-  color: $muted;
-  border-radius: 10px;
-  padding: 11px 18px;
-  font-size: 0.88rem;
-  cursor: pointer;
-  svg { width: 16px; height: 16px; }
-  &:hover { border-color: $primary; color: $primary; }
-}
-
-// ─── SENT SCREEN ✅ ───────────────────────────────────────────────────────────
-.sent-screen {
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
-
+// ── SENT SCREEN
+.sent-screen { display: flex; justify-content: center; padding: 24px 0; }
 .sent-card {
-  background: $card;
-  border-radius: $radius;
-  box-shadow: $shadow;
-  padding: 48px 36px;
-  text-align: center;
-  max-width: 460px;
-  width: 100%;
+  background: $card; border-radius: $radius; box-shadow: $shadow;
+  padding: 36px 24px; text-align: center; max-width: 440px; width: 100%;
   border: 1.5px solid #d1fae5;
-
-  .sent-icon {
-    font-size: 3.5rem;
-    margin-bottom: 16px;
-    display: block;
-  }
-
-  h2 {
-    margin: 0 0 12px;
-    color: $text;
-    font-size: 1.5rem;
-  }
-
-  .sent-main {
-    color: $muted;
-    font-size: 0.95rem;
-    margin: 0 0 8px;
-  }
-
-  .sent-phone {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: $primary;
-    margin-bottom: 16px;
-    letter-spacing: 1px;
-  }
-
-  .sent-sub {
-    color: $muted;
-    font-size: 0.88rem;
-    margin: 0 0 24px;
-    line-height: 1.6;
-  }
-
-  .sent-info {
-    background: #f8f7ff;
-    border: 1.5px solid #ede9fe;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin-bottom: 24px;
-    text-align: left;
-
-    .sent-info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      font-size: 0.88rem;
-      border-bottom: 1px solid #ede9fe;
-
-      &:last-child { border-bottom: none; }
-
-      span:first-child { color: $muted; }
-      span:last-child  { color: $text; font-weight: 600; }
-    }
+  .sent-icon { font-size: 3rem; margin-bottom: 14px; display: block; }
+  h2 { margin: 0 0 10px; color: $text; font-size: 1.4rem; }
+  .sent-main { color: $muted; font-size: 0.93rem; margin: 0 0 8px; }
+  .sent-phone { font-size: 1.2rem; font-weight: 800; color: $primary; margin-bottom: 14px; letter-spacing: 1px; }
+  .sent-sub { color: $muted; font-size: 0.86rem; margin: 0 0 20px; line-height: 1.6; }
+  .sent-info { background: #f8f7ff; border: 1.5px solid #ede9fe; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; text-align: left;
+    .sent-info-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.86rem; border-bottom: 1px solid #ede9fe; gap: 10px; &:last-child { border-bottom: none; } span:first-child { color: $muted; } span:last-child { color: $text; font-weight: 600; word-break: break-all; } }
   }
 }
 
-// ─── ERROR SCREEN ─────────────────────────────────────────────────────────────
-.error-screen { display: flex; justify-content: center; padding: 40px 0; }
+// ── ERROR SCREEN
+.error-screen { display: flex; justify-content: center; padding: 24px 0; }
+.error-card { background: $card; border-radius: $radius; box-shadow: $shadow; padding: 36px 24px; text-align: center; max-width: 420px; width: 100%; .err-icon { font-size: 2.6rem; margin-bottom: 12px; } h3 { margin: 0 0 8px; color: $text; font-size: 1.15rem; } p { margin: 0 0 20px; color: $muted; font-size: 0.9rem; line-height: 1.6; } }
+.err-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-.error-card {
-  background: $card; border-radius: $radius;
-  box-shadow: $shadow; padding: 44px 36px;
-  text-align: center; max-width: 440px; width: 100%;
-  .err-icon { font-size: 2.8rem; margin-bottom: 14px; }
-  h3 { margin: 0 0 10px; color: $text; font-size: 1.2rem; }
-  p  { margin: 0 0 24px; color: $muted; font-size: 0.92rem; line-height: 1.6; }
-}
-
-.err-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
+// ── MOBILE
+@media (max-width: 540px) {
+  .rx-page { padding: 14px 10px 50px; }
+  .rx-hero h1 { font-size: 1.35rem; }
+  .mode-cards { grid-template-columns: 1fr; max-width: 320px; }
+  .mode-card { padding: 20px 16px; flex-direction: row; text-align: left; gap: 14px; align-items: flex-start; h2 { font-size: 1rem; } }
+  .mode-icon { flex-shrink: 0; }
+  .user-details-form .form-row { flex-direction: column; }
+  .analyze-btn { width: 100%; justify-content: center; padding: 14px 20px; }
+  .sent-card { padding: 28px 18px; }
+  .error-card { padding: 28px 18px; }
 }

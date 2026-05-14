@@ -40,8 +40,7 @@
         </div>
       </div>
     </div>
-    <div class="data-table">
-      <table>
+    <div class="data-table"><div class="table-scroll"><table>
         <thead><tr><th>Name</th><th>City</th><th>Rating</th><th>Accreditation</th><th>Home</th><th>Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let lab of visibleLabs">
@@ -56,8 +55,7 @@
             </td>
           </tr>
         </tbody>
-      </table>
-    </div>
+      </table></div></div>
   </div>
 
   <!-- TESTS -->
@@ -71,8 +69,7 @@
       </div>
       <div class="form-actions"><button class="btn-primary" (click)="saveTest()">Add Test</button></div>
     </div>
-    <div class="data-table">
-      <table>
+    <div class="data-table"><div class="table-scroll"><table>
         <thead><tr><th>Test Name</th><th>Category</th><th>Description</th><th>Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let test of tests">
@@ -82,8 +79,7 @@
             <td class="actions"><button class="btn-del" (click)="deleteTest(test.id)">Delete</button></td>
           </tr>
         </tbody>
-      </table>
-    </div>
+      </table></div></div>
   </div>
 
   <!-- PRICES -->
@@ -99,8 +95,7 @@
       </div>
       <div class="form-actions"><button class="btn-primary" (click)="savePrice()">Save Price</button></div>
     </div>
-    <div class="data-table">
-      <table>
+    <div class="data-table"><div class="table-scroll"><table>
         <thead><tr><th>Lab</th><th>Test</th><th>Price</th><th>Discount</th><th>Effective</th><th>Report</th><th>Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let p of visiblePrices">
@@ -113,14 +108,12 @@
             <td class="actions"><button class="btn-del" (click)="deletePrice(p.id)">Delete</button></td>
           </tr>
         </tbody>
-      </table>
-    </div>
+      </table></div></div>
   </div>
 
   <!-- BOOKINGS -->
   <div *ngIf="activeTab==='bookings'">
-    <div class="data-table">
-      <table>
+    <div class="data-table"><div class="table-scroll"><table>
         <thead><tr><th>Ref</th><th>Patient</th><th>Test</th><th>Lab</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let b of visibleBookings">
@@ -134,7 +127,6 @@
             <td class="actions"><button class="btn-del" *ngIf="b.status==='CONFIRMED'" (click)="cancelBooking(b.bookingRef)">Cancel</button></td>
           </tr>
         </tbody>
-      </table>
-    </div>
+      </table></div></div>
   </div>
 </div>
