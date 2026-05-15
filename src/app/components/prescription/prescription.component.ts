@@ -13,7 +13,7 @@ export interface ExtractedTest {
   expanded: boolean;
 }
 
-type Step = 'choose' | 'upload' | 'camera' | 'analyzing' | 'results' | 'error' | 'sent';
+type Step = 'choose' | 'upload' | 'camera' | 'analyzing' | 'results' | 'error' | 'sent' | 'payment';
 
 @Component({
   selector: 'app-prescription',
@@ -51,6 +51,12 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   sending = false;
   nameError = '';
   phoneError = '';
+
+  // ─── Razorpay payment ─────────────────────────────────────────────────────
+  paymentAmount = 99;          // ₹99 consultation / prescription review fee
+  paymentSuccess = false;
+  paymentOrderId = '';
+  paymentPaymentId = '';
 
   constructor(private api: ApiService, private router: Router, private zone: NgZone) {}
 
@@ -197,63 +203,127 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     return valid;
   }
 
-  // ─── Send prescription to team via email ──────────────────────────────────
-  async sendToTeam() {
+  // ─── Step 1: validate → create Razorpay order → open checkout ───────────
+  async initiatePayment() {
     if (!this.validateForm()) return;
-
-    if (!this.canAnalyze()) {
-      return;
-    }
+    if (!this.canAnalyze()) return;
 
     this.sending = true;
 
     try {
-      const formData = new FormData();
-      formData.append('userName', this.userName.trim());
-      formData.append('userPhone', this.userPhone.trim());
-
-      if (this.capturedDataUrl) {
-        const res = await fetch(this.capturedDataUrl);
-        const blob = await res.blob();
-        const compressed = await this.compressBlob(blob);
-        formData.append('file', compressed, 'prescription.jpg');
-      } else if (this.selectedFile) {
-        if (this.selectedFile.type.startsWith('image/')) {
-          const dataUrl = await this.toDataUrl(this.selectedFile);
-          const res = await fetch(dataUrl);
-          const blob = await res.blob();
-          const compressed = await this.compressBlob(blob);
-          formData.append('file', compressed, this.selectedFile.name);
-        } else {
-          // PDF - send as is
-          formData.append('file', this.selectedFile, this.selectedFile.name);
-        }
-      }
-
-      const response = await fetch(`${environment.apiUrl}/prescription/notify`, {
+      // Ask backend to create a Razorpay order
+      const orderRes = await fetch(`${environment.apiUrl}/razorpay/create-order`, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userName:  this.userName.trim(),
+          userPhone: this.userPhone.trim(),
+          amount:    this.paymentAmount
+        })
       });
 
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(err || 'Server error');
-      }
+      if (!orderRes.ok) throw new Error('Could not create payment order');
+      const order = await orderRes.json();
 
-      this.zone.run(() => {
-        this.step = 'sent';
-      });
+      // Load Razorpay checkout script dynamically if not already loaded
+      await this.loadRazorpayScript();
+
+      const options: any = {
+        key:         order['key'],
+        amount:      order['amount'],          // in paise, returned by backend
+        currency:    'INR',
+        name:        'LabChain',
+        description: 'Prescription Review Fee',
+        order_id:    order['id'],
+        prefill: {
+          name:    this.userName.trim(),
+          contact: this.userPhone.trim()
+        },
+        theme: { color: '#6c63ff' },
+
+        handler: (response: any) => {
+          // Razorpay calls this on successful payment
+          this.zone.run(() => {
+            this.paymentOrderId   = response.razorpay_order_id;
+            this.paymentPaymentId = response.razorpay_payment_id;
+            this.handlePaymentSuccess(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature
+            );
+          });
+        },
+        modal: {
+          ondismiss: () => {
+            this.zone.run(() => { this.sending = false; });
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
 
     } catch (err: any) {
       this.zone.run(() => {
-        this.showError('Failed to send prescription. Please try again or call us directly.');
-      });
-    } finally {
-      this.zone.run(() => {
+        this.showError('Could not open payment. Please try again or call us directly.');
         this.sending = false;
       });
     }
   }
+
+  // ─── Step 2: verify signature on backend → send team email ───────────────
+  private async handlePaymentSuccess(orderId: string, paymentId: string, signature: string) {
+    try {
+      // Build test list from extracted tests (if any), else send empty
+      const testNames = this.extractedTests
+        .filter(et => et.matched !== null)
+        .map(et => et.matched!.name);
+
+      const verifyRes = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          razorpay_order_id:   orderId,
+          razorpay_payment_id: paymentId,
+          razorpay_signature:  signature,
+          userName:  this.userName.trim(),
+          userPhone: this.userPhone.trim(),
+          tests:     testNames,
+          amount:    this.paymentAmount
+        })
+      });
+
+      const result = await verifyRes.json();
+
+      if (!verifyRes.ok || !result.success) {
+        throw new Error(result.message || 'Payment verification failed');
+      }
+
+      // Payment verified + email sent → show success screen
+      this.paymentSuccess = true;
+      this.step = 'sent';
+
+    } catch (err: any) {
+      this.showError('Payment done but verification failed. Please contact support with Payment ID: ' + paymentId);
+    } finally {
+      this.sending = false;
+    }
+  }
+
+  // ─── Load Razorpay JS SDK once ────────────────────────────────────────────
+  private loadRazorpayScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).Razorpay) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload  = () => resolve();
+      script.onerror = () => reject(new Error('Razorpay script failed to load'));
+      document.body.appendChild(script);
+    });
+  }
+
+  // ─── Keep old sendToTeam as alias (used by template buttons) ─────────────
+  sendToTeam() { this.initiatePayment(); }
 
   private compressBlob(blob: Blob): Promise<Blob> {
     return new Promise(resolve => {
@@ -312,6 +382,9 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     this.nameError = '';
     this.phoneError = '';
     this.sending = false;
+    this.paymentSuccess = false;
+    this.paymentOrderId = '';
+    this.paymentPaymentId = '';
   }
 
   private showError(msg: string) {

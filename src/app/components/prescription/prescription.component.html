@@ -138,17 +138,17 @@
 
     <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
 
-    <!-- Send to Team Button -->
+    <!-- Pay & Send Button -->
     <button
       class="analyze-btn"
       *ngIf="selectedFile"
       (click)="sendToTeam()"
       [disabled]="sending">
       <svg *ngIf="!sending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/>
+        <rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>
       </svg>
       <span class="btn-spinner" *ngIf="sending"></span>
-      {{ sending ? 'Sending...' : 'Send to Team' }}
+      {{ sending ? 'Opening Payment...' : 'Pay ₹' + paymentAmount + ' & Send to Team' }}
     </button>
 
     <!-- Hidden camera input for mobile -->
@@ -242,10 +242,10 @@
 
         <button class="analyze-btn" (click)="sendToTeam()" [disabled]="sending">
           <svg *ngIf="!sending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/>
+            <rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>
           </svg>
           <span class="btn-spinner" *ngIf="sending"></span>
-          {{ sending ? 'Sending...' : 'Send to Team' }}
+          {{ sending ? 'Opening Payment...' : 'Pay ₹' + paymentAmount + ' & Send to Team' }}
         </button>
       </div>
     </div>
@@ -258,7 +258,7 @@
   <div *ngIf="step === 'sent'" class="sent-screen">
     <div class="sent-card">
       <div class="sent-icon">✅</div>
-      <h2>Prescription Sent!</h2>
+      <h2>Payment Successful!</h2>
       <p class="sent-main">Our team will call you shortly on</p>
       <div class="sent-phone">📞 {{ userPhone }}</div>
       <p class="sent-sub">We usually respond within <strong>30 minutes</strong> during working hours (9 AM – 8 PM).</p>
@@ -270,6 +270,14 @@
         <div class="sent-info-row">
           <span>📞 Phone</span>
           <span>{{ userPhone }}</span>
+        </div>
+        <div class="sent-info-row">
+          <span>💳 Amount Paid</span>
+          <span class="paid-amount">₹{{ paymentAmount }}</span>
+        </div>
+        <div class="sent-info-row" *ngIf="paymentPaymentId">
+          <span>🆔 Payment ID</span>
+          <span class="payment-id">{{ paymentPaymentId }}</span>
         </div>
       </div>
       <button class="analyze-btn" (click)="reset()">
