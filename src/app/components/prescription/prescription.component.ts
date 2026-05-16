@@ -45,22 +45,26 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   analysisProgress = '';
   allTests: TestItem[] = [];
 
-  // ─── User details ─────────────────────────────────────────────────────────
-  userName = '';
+  // ─── User details for prescription notification ───────────────────────────
+  userName  = '';
   userPhone = '';
+  userEmail = '';   // optional — patient's email for TO field
   sending = false;
   nameError = '';
   phoneError = '';
 
-  // ─── Razorpay ─────────────────────────────────────────────────────────────
-  paymentAmount = 99;
+  // ─── Razorpay payment ─────────────────────────────────────────────────────
+  paymentAmount = 99;          // ₹99 consultation / prescription review fee
   paymentSuccess = false;
   paymentOrderId = '';
   paymentPaymentId = '';
 
   constructor(private api: ApiService, private router: Router, private zone: NgZone) {}
 
-  ngOnInit() { this.api.getTests().subscribe(t => { this.allTests = t; }); }
+  ngOnInit() {
+    this.api.getTests().subscribe(t => { this.allTests = t; });
+  }
+
   ngOnDestroy() { this.stopCamera(); }
 
   selectUpload() { this.step = 'upload'; }
@@ -111,8 +115,11 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
   setFile(file: File) {
     const isImage = file.type.startsWith('image/');
-    const isPdf   = file.type === 'application/pdf';
-    if (!isImage && !isPdf) { this.showError('Please upload an image file (JPG, PNG, WEBP) or PDF.'); return; }
+    const isPdf = file.type === 'application/pdf';
+    if (!isImage && !isPdf) {
+      this.showError('Please upload an image file (JPG, PNG, WEBP) or PDF.');
+      return;
+    }
     this.selectedFile = file;
     this.capturedDataUrl = null;
     if (isImage) {
@@ -126,9 +133,15 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
   async startCamera() {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }
+      });
       const vid = this.videoEl?.nativeElement;
-      if (vid) { vid.srcObject = this.stream; await vid.play(); this.zone.run(() => { this.cameraReady = true; }); }
+      if (vid) {
+        vid.srcObject = this.stream;
+        await vid.play();
+        this.zone.run(() => { this.cameraReady = true; });
+      }
     } catch (err: any) {
       this.zone.run(() => {
         this.cameraError = err.name === 'NotAllowedError'
@@ -139,55 +152,81 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
   }
 
   capturePhoto() {
-    const vid    = this.videoEl.nativeElement;
+    const vid = this.videoEl.nativeElement;
     const canvas = this.canvasEl.nativeElement;
-    canvas.width  = vid.videoWidth  || 1280;
+    canvas.width = vid.videoWidth || 1280;
     canvas.height = vid.videoHeight || 720;
     canvas.getContext('2d')!.drawImage(vid, 0, 0, canvas.width, canvas.height);
     this.capturedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-    this.previewUrl      = this.capturedDataUrl;
-    this.selectedFile    = null;
+    this.previewUrl = this.capturedDataUrl;
+    this.selectedFile = null;
     this.stopCamera();
   }
 
   retakePhoto() {
     this.capturedDataUrl = null;
-    this.previewUrl      = null;
-    this.cameraReady     = false;
-    this.cameraError     = '';
+    this.previewUrl = null;
+    this.cameraReady = false;
+    this.cameraError = '';
     setTimeout(() => this.startCamera(), 100);
   }
 
   stopCamera() {
-    if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => t.stop());
+      this.stream = null;
+    }
   }
 
-  canAnalyze(): boolean { return !!(this.selectedFile || this.capturedDataUrl); }
+  canAnalyze(): boolean {
+    return !!(this.selectedFile || this.capturedDataUrl);
+  }
 
+  // ─── Validate user details form ───────────────────────────────────────────
   validateForm(): boolean {
     this.nameError = '';
     this.phoneError = '';
     let valid = true;
-    if (!this.userName.trim()) { this.nameError = 'Please enter your name'; valid = false; }
-    if (!this.userPhone.trim()) { this.phoneError = 'Please enter your phone number'; valid = false; }
-    else if (!/^[6-9]\d{9}$/.test(this.userPhone.trim())) { this.phoneError = 'Please enter a valid 10-digit phone number'; valid = false; }
+
+    if (!this.userName.trim()) {
+      this.nameError = 'Please enter your name';
+      valid = false;
+    }
+
+    if (!this.userPhone.trim()) {
+      this.phoneError = 'Please enter your phone number';
+      valid = false;
+    } else if (!/^[6-9]\d{9}$/.test(this.userPhone.trim())) {
+      this.phoneError = 'Please enter a valid 10-digit phone number';
+      valid = false;
+    }
+
     return valid;
   }
 
-  // ── Step 1: validate → create Razorpay order → open checkout ─────────────
+  // ─── Step 1: validate → create Razorpay order → open checkout ───────────
   async initiatePayment() {
     if (!this.validateForm()) return;
     if (!this.canAnalyze()) return;
+
     this.sending = true;
+
     try {
       const orderRes = await fetch(`${environment.apiUrl}/razorpay/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName: this.userName.trim(), userPhone: this.userPhone.trim(), amount: this.paymentAmount })
+        body: JSON.stringify({
+          userName:  this.userName.trim(),
+          userPhone: this.userPhone.trim(),
+          amount:    this.paymentAmount
+        })
       });
+
       if (!orderRes.ok) throw new Error('Could not create payment order');
       const order = await orderRes.json();
+
       await this.loadRazorpayScript();
+
       const options: any = {
         key:         order['key'],
         amount:      order['amount'],
@@ -195,58 +234,51 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         name:        'LabChain',
         description: 'Prescription Review Fee',
         order_id:    order['id'],
-        prefill:     { name: this.userName.trim(), contact: this.userPhone.trim() },
-        theme:       { color: '#6c63ff' },
+        prefill: {
+          name:    this.userName.trim(),
+          contact: this.userPhone.trim()
+        },
+        theme: { color: '#6c63ff' },
+
         handler: (response: any) => {
           this.zone.run(() => {
             this.paymentOrderId   = response.razorpay_order_id;
             this.paymentPaymentId = response.razorpay_payment_id;
-            this.handlePaymentSuccess(response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
+            this.handlePaymentSuccess(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature
+            );
           });
         },
-        modal: { ondismiss: () => { this.zone.run(() => { this.sending = false; }); } }
+        modal: {
+          ondismiss: () => {
+            this.zone.run(() => { this.sending = false; });
+          }
+        }
       };
+
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
+
     } catch (err: any) {
-      this.zone.run(() => { this.showError('Could not open payment. Please try again or call us directly.'); this.sending = false; });
+      this.zone.run(() => {
+        this.showError('Could not open payment. Please try again or call us directly.');
+        this.sending = false;
+      });
     }
   }
 
-  // ── Step 2: encode image → single verify-payment call → ONE email sent ────
-  // Image is base64-encoded here in the browser and sent inside the JSON body.
-  // The backend attaches it directly to the team email.
-  // NO second call to /api/prescription/notify — that was causing the 2nd email.
+  // ─── Step 2: verify on backend, then send prescription image to team ──────
+  // FIX: After payment verified, also POST the prescription image to
+  //      /api/prescription/notify so the team email has the image as attachment.
   private async handlePaymentSuccess(orderId: string, paymentId: string, signature: string) {
     try {
-      const testNames = this.extractedTests.filter(et => et.matched !== null).map(et => et.matched!.name);
+      const testNames = this.extractedTests
+        .filter(et => et.matched !== null)
+        .map(et => et.matched!.name);
 
-      // ── Encode the prescription image to base64 ───────────────────────────
-      let imageBase64: string | null = null;
-      let imageMime   = 'image/jpeg';
-      let imageName   = 'prescription.jpg';
-
-      if (this.capturedDataUrl) {
-        // Camera capture: data URL = "data:image/jpeg;base64,<data>" — strip prefix
-        imageBase64 = this.capturedDataUrl.split(',')[1] ?? null;
-        imageMime   = 'image/jpeg';
-        imageName   = 'prescription-camera.jpg';
-      } else if (this.selectedFile) {
-        if (this.selectedFile.type.startsWith('image/')) {
-          const compressed = await this.compressBlob(this.selectedFile);
-          const dataUrl    = await this.blobToDataUrl(compressed);
-          imageBase64      = dataUrl.split(',')[1];
-          imageMime        = 'image/jpeg';
-          imageName        = this.selectedFile.name.replace(/\.[^.]+$/, '') + '.jpg';
-        } else if (this.selectedFile.type === 'application/pdf') {
-          const dataUrl = await this.toDataUrl(this.selectedFile);
-          imageBase64   = dataUrl.split(',')[1];
-          imageMime     = 'application/pdf';
-          imageName     = this.selectedFile.name;
-        }
-      }
-
-      // ── Single HTTP call — image travels inside JSON, ONE email fires ─────
+      // 1) Verify payment — fires team email with test list (no image attachment here)
       const verifyRes = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,21 +286,25 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
           razorpay_order_id:   orderId,
           razorpay_payment_id: paymentId,
           razorpay_signature:  signature,
-          userName:    this.userName.trim(),
-          userPhone:   this.userPhone.trim(),
-          tests:       testNames,
-          amount:      this.paymentAmount,
-          imageBase64: imageBase64,
-          imageMime:   imageMime,
-          imageName:   imageName
+          userName:  this.userName.trim(),
+          userPhone: this.userPhone.trim(),
+          tests:     testNames,
+          amount:    this.paymentAmount
         })
       });
 
       const result = await verifyRes.json();
-      if (!verifyRes.ok || !result.success) throw new Error(result.message || 'Payment verification failed');
 
-      this.paymentSuccess  = true;
-      this.step            = 'sent';
+      if (!verifyRes.ok || !result.success) {
+        throw new Error(result.message || 'Payment verification failed');
+      }
+
+      // 2) FIX: Send prescription image as attachment via /api/prescription/notify
+      //    This is the call that was missing — team email now has the image attached.
+      await this.sendPrescriptionImageToTeam();
+
+      this.paymentSuccess = true;
+      this.step = 'sent';
 
     } catch (err: any) {
       this.showError('Payment done but verification failed. Please contact support with Payment ID: ' + paymentId);
@@ -277,30 +313,80 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Razorpay script loader ────────────────────────────────────────────────
+  // ─── Send prescription image as multipart to /api/prescription/notify ────
+  // Works for both: selectedFile (upload) and capturedDataUrl (webcam photo).
+  // On failure: logs error silently — payment is already verified, don't block user.
+  private async sendPrescriptionImageToTeam(): Promise<void> {
+    let fileToSend: File | null = null;
+
+    if (this.selectedFile) {
+      // Uploaded file — compress if image, send PDF as-is
+      if (this.selectedFile.type.startsWith('image/')) {
+        try {
+          const compressed = await this.compressBlob(this.selectedFile);
+          fileToSend = new File([compressed], this.selectedFile.name, { type: 'image/jpeg' });
+        } catch {
+          fileToSend = this.selectedFile; // fallback: original
+        }
+      } else {
+        fileToSend = this.selectedFile; // PDF
+      }
+    } else if (this.capturedDataUrl) {
+      // Webcam capture — convert base64 data URL → Blob → File
+      const blob = await fetch(this.capturedDataUrl).then(r => r.blob());
+      const compressed = await this.compressBlob(blob);
+      fileToSend = new File([compressed], 'prescription.jpg', { type: 'image/jpeg' });
+    }
+
+    if (!fileToSend) {
+      // No image (shouldn't happen), skip silently
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('userName',  this.userName.trim());
+    formData.append('userPhone', this.userPhone.trim());
+    formData.append('file', fileToSend, fileToSend.name);
+
+    // IMPORTANT: Do NOT set Content-Type header manually.
+    // Browser sets it automatically with the multipart boundary.
+    const res = await fetch(`${environment.apiUrl}/prescription/notify`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('[Prescription] Image attachment send failed:', err);
+      // Do NOT throw — payment is verified, image send is best-effort
+    }
+  }
+
+  // ─── Load Razorpay JS SDK once ────────────────────────────────────────────
   private loadRazorpayScript(): Promise<void> {
     return new Promise((resolve, reject) => {
       if ((window as any).Razorpay) { resolve(); return; }
-      const script   = document.createElement('script');
-      script.src     = 'https://checkout.razorpay.com/v1/checkout.js';
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload  = () => resolve();
       script.onerror = () => reject(new Error('Razorpay script failed to load'));
       document.body.appendChild(script);
     });
   }
 
+  // ─── sendToTeam used by HTML template buttons ─────────────────────────────
   sendToTeam() { this.initiatePayment(); }
 
-  // ── Image helpers ─────────────────────────────────────────────────────────
+  // ─── Compress image before uploading (reduces email size) ────────────────
   private compressBlob(blob: Blob): Promise<Blob> {
     return new Promise(resolve => {
       const img = new Image();
       const url = URL.createObjectURL(blob);
       img.onload = () => {
         URL.revokeObjectURL(url);
-        const canvas  = document.createElement('canvas');
-        const maxW    = 1200;
-        const scale   = img.width > maxW ? maxW / img.width : 1;
+        const canvas = document.createElement('canvas');
+        const maxW = 1200;
+        const scale = img.width > maxW ? maxW / img.width : 1;
         canvas.width  = Math.round(img.width  * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -310,18 +396,9 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     });
   }
 
-  private blobToDataUrl(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader   = new FileReader();
-      reader.onload  = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
   private toDataUrl(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
-      const reader   = new FileReader();
+      const reader = new FileReader();
       reader.onload  = () => { resolve(reader.result as string); };
       reader.onerror = reject;
       reader.readAsDataURL(file);
@@ -330,51 +407,66 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
 
   goBack() {
     this.stopCamera();
-    if (this.step === 'results' || this.step === 'error' || this.step === 'sent') { this.reset(); }
-    else { this.step = 'choose'; this.selectedFile = null; this.capturedDataUrl = null; this.previewUrl = null; this.cameraReady = false; this.cameraError = ''; }
+    if (this.step === 'results' || this.step === 'error' || this.step === 'sent') {
+      this.reset();
+    } else {
+      this.step = 'choose';
+      this.selectedFile = null;
+      this.capturedDataUrl = null;
+      this.previewUrl = null;
+      this.cameraReady = false;
+      this.cameraError = '';
+    }
   }
 
   reset() {
     this.stopCamera();
-    this.step            = 'choose';
-    this.selectedFile    = null;
+    this.step = 'choose';
+    this.selectedFile = null;
     this.capturedDataUrl = null;
-    this.previewUrl      = null;
-    this.extractedTests  = [];
-    this.errorMsg        = '';
-    this.doctorNotes     = '';
-    this.cameraReady     = false;
-    this.cameraError     = '';
-    this.userName        = '';
-    this.userPhone       = '';
-    this.nameError       = '';
-    this.phoneError      = '';
-    this.sending         = false;
-    this.paymentSuccess  = false;
-    this.paymentOrderId  = '';
+    this.previewUrl = null;
+    this.extractedTests = [];
+    this.errorMsg = '';
+    this.doctorNotes = '';
+    this.cameraReady = false;
+    this.cameraError = '';
+    this.userName = '';
+    this.userPhone = '';
+    this.nameError = '';
+    this.phoneError = '';
+    this.sending = false;
+    this.paymentSuccess = false;
+    this.paymentOrderId = '';
     this.paymentPaymentId = '';
   }
 
-  private showError(msg: string) { this.errorMsg = msg; this.step = 'error'; }
+  private showError(msg: string) {
+    this.errorMsg = msg;
+    this.step = 'error';
+  }
 
   sortedPrices(prices: PriceDTO[]): PriceDTO[] {
     const p = [...prices];
-    if (this.sortBy === 'price-asc')  return p.sort((a, b) => a.effectivePrice - b.effectivePrice);
-    if (this.sortBy === 'price-desc') return p.sort((a, b) => b.effectivePrice - a.effectivePrice);
-    if (this.sortBy === 'rating')     return p.sort((a, b) => b.labRating - a.labRating);
+    if (this.sortBy === 'price-asc')  { return p.sort((a, b) => a.effectivePrice - b.effectivePrice); }
+    if (this.sortBy === 'price-desc') { return p.sort((a, b) => b.effectivePrice - a.effectivePrice); }
+    if (this.sortBy === 'rating')     { return p.sort((a, b) => b.labRating - a.labRating); }
     return p.sort((a, b) => a.labName.localeCompare(b.labName));
   }
 
   lowestPrice(prices: PriceDTO[]): number {
-    if (!prices || prices.length === 0) return 0;
+    if (!prices || prices.length === 0) { return 0; }
     return Math.min(...prices.map(p => p.effectivePrice));
   }
 
-  get matchedCount(): number { return this.extractedTests.filter(et => et.matched !== null).length; }
+  get matchedCount(): number {
+    return this.extractedTests.filter(et => et.matched !== null).length;
+  }
 
   get totalMinCost(): number {
     let total = 0;
-    for (const et of this.extractedTests) { if (et.prices.length > 0) total += this.lowestPrice(et.prices); }
+    for (const et of this.extractedTests) {
+      if (et.prices.length > 0) { total += this.lowestPrice(et.prices); }
+    }
     return total;
   }
 
@@ -382,14 +474,16 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     return name.split(' ').filter(Boolean).map((w: string) => w[0].toUpperCase()).slice(0, 2).join('');
   }
 
-  bookNow(price: PriceDTO) { this.router.navigate(['/book'], { state: { price } }); }
+  bookNow(price: PriceDTO) {
+    this.router.navigate(['/book'], { state: { price: price } });
+  }
 
   onCityChange() {
     for (const et of this.extractedTests) {
       if (et.matched) {
         et.loading = true;
         this.api.searchPrices(et.matched.id, this.cityFilter || undefined).subscribe({
-          next:  p => this.zone.run(() => { et.prices = p; et.loading = false; }),
+          next: p => this.zone.run(() => { et.prices = p; et.loading = false; }),
           error: () => this.zone.run(() => { et.loading = false; })
         });
       }

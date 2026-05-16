@@ -99,6 +99,14 @@
           />
           <span class="field-error" *ngIf="phoneError">{{ phoneError }}</span>
         </div>
+        <div class="form-group">
+          <label>Email <span style="font-size:0.78rem;color:#6b7280;font-weight:400;">(optional — confirmation will be sent here)</span></label>
+          <input
+            [(ngModel)]="userEmail"
+            placeholder="your@email.com"
+            type="email"
+          />
+        </div>
       </div>
     </div>
 
@@ -196,6 +204,14 @@
             (input)="phoneError = ''"
           />
           <span class="field-error" *ngIf="phoneError">{{ phoneError }}</span>
+        </div>
+        <div class="form-group">
+          <label>Email <span style="font-size:0.78rem;color:#6b7280;font-weight:400;">(optional — confirmation will be sent here)</span></label>
+          <input
+            [(ngModel)]="userEmail"
+            placeholder="your@email.com"
+            type="email"
+          />
         </div>
       </div>
     </div>

@@ -174,7 +174,8 @@ export class BookingComponent implements OnInit {
           userName: booking.patientName,
           userPhone: booking.phone,
           amount: Math.round(booking.totalAmount || this.total),
-          tests: [booking.testName],
+          tests:      [booking.testName],
+          userEmail:  booking.email,        // patient's email → TO field
           // Booking context for rich team email
           bookingRef: booking.bookingRef,
           labName: booking.labName,
