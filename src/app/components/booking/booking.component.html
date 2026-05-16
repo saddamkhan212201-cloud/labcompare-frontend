@@ -95,7 +95,7 @@
       </div>
     </div>
 
-    <!-- Step 3: Confirm -->
+    <!-- Step 3: Confirm & Pay -->
     <div *ngIf="step===3" class="step-content">
       <h2>Review &amp; confirm</h2>
       <div class="summary-card">
@@ -109,18 +109,39 @@
         <div class="summary-row total"><span>Total</span><span>₹{{total | number:'1.0-0'}}</span></div>
       </div>
 
+      <!-- Payment method -->
       <div class="form-group full" style="margin-top:1rem">
         <label>Payment method</label>
         <div class="radio-cards">
-          <div class="radio-card" [class.selected]="form.paymentMethod==='UPI'" (click)="form.paymentMethod='UPI'">UPI</div>
-          <div class="radio-card" [class.selected]="form.paymentMethod==='CARD'" (click)="form.paymentMethod='CARD'">Card</div>
-          <div class="radio-card" [class.selected]="form.paymentMethod==='CASH'" (click)="form.paymentMethod='CASH'">Pay at Lab</div>
+          <div class="radio-card" [class.selected]="form.paymentMethod==='UPI'" (click)="form.paymentMethod='UPI'">
+            <div class="radio-title">📱 UPI / Card</div>
+            <div class="radio-sub">Pay via Razorpay</div>
+          </div>
+          <div class="radio-card" [class.selected]="form.paymentMethod==='CASH'" (click)="form.paymentMethod='CASH'">
+            <div class="radio-title">💵 Pay at Lab</div>
+            <div class="radio-sub">Cash on visit</div>
+          </div>
         </div>
       </div>
-      <span class="err-msg" *ngIf="errors['submit']">{{errors['submit']}}</span>
+
+      <!-- Payment cancelled / error box with retry -->
+      <div class="payment-error-box" *ngIf="paymentError">
+        <span class="peb-msg">⚠️ {{paymentError}}</span>
+        <button class="btn-retry" (click)="retryPayment()" *ngIf="confirmed">Retry Payment</button>
+      </div>
+
+      <span class="err-msg" *ngIf="errors['submit']" style="margin-top:8px;display:block">{{errors['submit']}}</span>
+
       <div class="step-actions">
-        <button class="btn-secondary" (click)="back()">← Back</button>
-        <button class="btn-primary" (click)="confirm()" [disabled]="loading">{{loading ? 'Confirming...' : 'Confirm Booking'}}</button>
+        <button class="btn-secondary" (click)="back()" [disabled]="loading || paymentLoading">← Back</button>
+        <button class="btn-primary" (click)="confirm()" [disabled]="loading || paymentLoading">
+          <span class="btn-spinner" *ngIf="loading || paymentLoading"></span>
+          <span *ngIf="!loading && !paymentLoading">
+            {{form.paymentMethod==='CASH' ? 'Confirm Booking' : 'Confirm &amp; Pay ₹' + (total | number:'1.0-0')}}
+          </span>
+          <span *ngIf="loading">Saving booking…</span>
+          <span *ngIf="!loading && paymentLoading">Opening payment…</span>
+        </button>
       </div>
     </div>
 
@@ -128,29 +149,38 @@
     <div *ngIf="step===4 && confirmed" class="step-content success-state">
       <div class="success-icon">✓</div>
       <h2>Booking Confirmed!</h2>
-      <p class="success-msg">Your <strong>{{confirmed.testName}}</strong> at <strong>{{confirmed.labName}}</strong> is booked for {{confirmed.appointmentDate}} at {{confirmed.appointmentSlot}}.</p>
+      <p class="success-msg">
+        Your <strong>{{confirmed.testName}}</strong> at <strong>{{confirmed.labName}}</strong>
+        is booked for {{confirmed.appointmentDate}} at {{confirmed.appointmentSlot}}.
+      </p>
       <div class="booking-ref">Booking ID: <strong>{{confirmed.bookingRef}}</strong></div>
 
+      <!-- Email notice -->
       <div class="email-notice" *ngIf="confirmed.email">
         <span class="email-icon">📧</span>
         Confirmation email sent to <strong>{{confirmed.email}}</strong>
       </div>
 
-      <!-- QR Code Card -->
-      <div class="qr-card">
-        <div class="qr-card-header">
-          <span class="qr-title">💳 Pay via UPI</span>
-          <span class="qr-subtitle">Scan with any UPI app - GPay, PhonePe, Paytm</span>
-        </div>
-        <div class="qr-body">
-          <div *ngIf="qrLoading" class="qr-loader">
-            <div class="spinner"></div>
-            <span>Generating QR...</span>
+      <!-- Razorpay payment success badge -->
+      <div class="payment-success-badge" *ngIf="paymentSuccess && form.paymentMethod !== 'CASH'">
+        <div class="psb-icon">💳</div>
+        <div class="psb-text">
+          <div class="psb-title">Payment Successful</div>
+          <div class="psb-sub">
+            ₹{{confirmed.totalAmount | number:'1.0-0'}} paid via Razorpay
+            <span *ngIf="paymentPaymentId"> · ID: {{paymentPaymentId}}</span>
           </div>
-          <img *ngIf="!qrLoading && qrBase64" [src]="'data:image/png;base64,' + qrBase64" alt="UPI Payment QR Code" class="qr-image" (click)="openQrModal()" />
-          <div *ngIf="!qrLoading && qrBase64" class="qr-hint">Tap to enlarge</div>
+          <div class="psb-note">Our team will contact you to confirm your appointment.</div>
         </div>
-        <div class="qr-amount">Total: <strong>₹{{confirmed.totalAmount | number:'1.0-0'}}</strong></div>
+      </div>
+
+      <!-- Cash notice -->
+      <div class="cash-notice" *ngIf="form.paymentMethod === 'CASH'">
+        <div class="cash-icon">💵</div>
+        <div class="cash-text">
+          <div class="cash-title">Pay at Lab</div>
+          <div class="cash-sub">Carry ₹{{confirmed.totalAmount | number:'1.0-0'}} cash and a valid photo ID on your appointment day.</div>
+        </div>
       </div>
 
       <div class="success-actions">
@@ -159,17 +189,5 @@
       </div>
     </div>
 
-  </div>
-</div>
-
-<!-- QR Modal Overlay -->
-<div class="qr-modal-overlay" *ngIf="showQrModal" (click)="closeQrModal()">
-  <div class="qr-modal" (click)="$event.stopPropagation()">
-    <button class="qr-modal-close" (click)="closeQrModal()">✕</button>
-    <h3>Scan to Pay via UPI</h3>
-    <p class="qr-modal-sub">{{confirmed?.labName}} &nbsp;•&nbsp; ₹{{confirmed?.totalAmount | number:'1.0-0'}}</p>
-    <img [src]="'data:image/png;base64,' + qrBase64" alt="UPI QR Code" class="qr-modal-img" />
-    <p class="qr-modal-ref">Booking Ref: <strong>{{confirmed?.bookingRef}}</strong></p>
-    <p class="qr-modal-note">Open GPay / PhonePe / Paytm and scan this QR code to pay ₹{{confirmed?.totalAmount | number:'1.0-0'}} to {{confirmed?.labName}}.</p>
   </div>
 </div>

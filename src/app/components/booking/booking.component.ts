@@ -1,28 +1,40 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService, PriceDTO, BookingDTO } from '../../services/api.service';
+import { environment } from '../../../environments/environment';
 
-@Component({ selector: 'app-booking', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './booking.component.html', styleUrl: './booking.component.scss' })
+@Component({
+  selector: 'app-booking',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './booking.component.html',
+  styleUrl: './booking.component.scss'
+})
 export class BookingComponent implements OnInit {
   price: PriceDTO | null = null;
   step = 1;
   loading = false;
   confirmed: BookingDTO | null = null;
 
-  // QR Code
-  qrBase64: string | null = null;
-  qrLoading = false;
-  showQrModal = false;
+  // Razorpay payment state
+  paymentLoading = false;
+  paymentSuccess = false;
+  paymentError = '';
+  paymentPaymentId = '';
 
-  form = { patientName:'', patientAge:'', phone:'', email:'', collectionType:'HOME', collectionAddress:'', appointmentDate:'', appointmentSlot:'', paymentMethod:'UPI' };
-  errors: Record<string,string> = {};
+  form = {
+    patientName: '', patientAge: '', phone: '', email: '',
+    collectionType: 'HOME', collectionAddress: '',
+    appointmentDate: '', appointmentSlot: '', paymentMethod: 'UPI'
+  };
+  errors: Record<string, string> = {};
 
-  dates: {label:string, value:string}[] = [];
-  slots = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+  dates: { label: string; value: string }[] = [];
+  slots = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, private zone: NgZone) {}
 
   ngOnInit() {
     const nav = window.history.state;
@@ -32,8 +44,8 @@ export class BookingComponent implements OnInit {
   }
 
   buildDates() {
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     for (let i = 1; i <= 8; i++) {
       const d = new Date(); d.setDate(d.getDate() + i);
       this.dates.push({ label: `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`, value: d.toISOString().split('T')[0] });
@@ -65,6 +77,8 @@ export class BookingComponent implements OnInit {
   confirm() {
     if (!this.price) return;
     this.loading = true;
+    this.errors = {};
+    this.paymentError = '';
     const req = {
       patientName: this.form.patientName, patientAge: Number(this.form.patientAge),
       phone: this.form.phone, email: this.form.email,
@@ -76,24 +90,116 @@ export class BookingComponent implements OnInit {
     this.api.createBooking(req).subscribe({
       next: booking => {
         this.confirmed = booking;
-        this.step = 4;
         this.loading = false;
-        this.loadQRCode(booking.bookingRef);
+        if (this.form.paymentMethod === 'CASH') {
+          // Cash: no online payment, go straight to success screen
+          this.paymentSuccess = true;
+          this.step = 4;
+        } else {
+          // UPI / Card: open Razorpay checkout
+          this.openRazorpay(booking);
+        }
       },
       error: (e) => { this.errors['submit'] = e?.error?.message || 'Booking failed. Please try again.'; this.loading = false; }
     });
   }
 
-  loadQRCode(ref: string) {
-    this.qrLoading = true;
-    this.api.getBookingQR(ref).subscribe({
-      next: res => { this.qrBase64 = res.qrBase64; this.qrLoading = false; },
-      error: () => { this.qrLoading = false; }
+  private loadRazorpayScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).Razorpay) { resolve(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('Razorpay script failed to load'));
+      document.body.appendChild(s);
     });
   }
 
-  openQrModal() { this.showQrModal = true; }
-  closeQrModal() { this.showQrModal = false; }
+  private async openRazorpay(booking: BookingDTO) {
+    this.paymentLoading = true;
+    this.paymentError = '';
+    try {
+      // 1. Create Razorpay order on our backend
+      const orderRes = await fetch(`${environment.apiUrl}/razorpay/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: this.form.patientName.trim(), userPhone: this.form.phone.trim(), amount: Math.round(this.total) })
+      });
+      if (!orderRes.ok) throw new Error('Could not create payment order');
+      const order = await orderRes.json();
+
+      await this.loadRazorpayScript();
+
+      // 2. Open Razorpay checkout modal
+      const options: any = {
+        key: order['key'],
+        amount: order['amount'],
+        currency: 'INR',
+        name: 'LabChain',
+        description: `${booking.testName} at ${booking.labName}`,
+        order_id: order['id'],
+        prefill: { name: this.form.patientName.trim(), contact: this.form.phone.trim(), email: this.form.email.trim() || undefined },
+        notes: { booking_ref: booking.bookingRef, test: booking.testName, lab: booking.labName },
+        theme: { color: '#1D9E75' },
+        handler: (response: any) => {
+          this.zone.run(() => {
+            this.paymentPaymentId = response.razorpay_payment_id;
+            this.verifyAndFinalize(booking, response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
+          });
+        },
+        modal: {
+          ondismiss: () => {
+            this.zone.run(() => {
+              this.paymentLoading = false;
+              this.paymentError = 'Payment was cancelled. Click "Retry Payment" to try again.';
+            });
+          }
+        }
+      };
+      new (window as any).Razorpay(options).open();
+    } catch (err: any) {
+      this.zone.run(() => { this.paymentLoading = false; this.paymentError = 'Could not open payment gateway. Please try again.'; });
+    }
+  }
+
+  private async verifyAndFinalize(booking: BookingDTO, orderId: string, paymentId: string, signature: string) {
+    try {
+      const res = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          razorpay_order_id: orderId,
+          razorpay_payment_id: paymentId,
+          razorpay_signature: signature,
+          userName: booking.patientName,
+          userPhone: booking.phone,
+          amount: Math.round(booking.totalAmount || this.total),
+          tests: [booking.testName],
+          // Booking context for rich team email
+          bookingRef: booking.bookingRef,
+          labName: booking.labName,
+          appointmentDate: booking.appointmentDate,
+          appointmentSlot: booking.appointmentSlot,
+          collectionType: booking.collectionType,
+          collectionAddress: booking.collectionAddress
+        })
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) throw new Error(result.message || 'Verification failed');
+      this.paymentSuccess = true;
+      this.paymentLoading = false;
+      this.step = 4;
+    } catch (err: any) {
+      this.paymentLoading = false;
+      this.paymentError = 'Payment received but verification failed. Contact support with Payment ID: ' + paymentId;
+    }
+  }
+
+  retryPayment() {
+    if (!this.confirmed) return;
+    this.paymentError = '';
+    this.openRazorpay(this.confirmed);
+  }
 
   goSearch() { this.router.navigate(['/search']); }
   goMyBookings() { this.router.navigate(['/my-bookings']); }

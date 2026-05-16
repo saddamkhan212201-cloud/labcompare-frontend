@@ -211,7 +211,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     this.sending = true;
 
     try {
-      // Ask backend to create a Razorpay order
       const orderRes = await fetch(`${environment.apiUrl}/razorpay/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,12 +224,11 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
       if (!orderRes.ok) throw new Error('Could not create payment order');
       const order = await orderRes.json();
 
-      // Load Razorpay checkout script dynamically if not already loaded
       await this.loadRazorpayScript();
 
       const options: any = {
         key:         order['key'],
-        amount:      order['amount'],          // in paise, returned by backend
+        amount:      order['amount'],
         currency:    'INR',
         name:        'LabChain',
         description: 'Prescription Review Fee',
@@ -242,7 +240,6 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         theme: { color: '#6c63ff' },
 
         handler: (response: any) => {
-          // Razorpay calls this on successful payment
           this.zone.run(() => {
             this.paymentOrderId   = response.razorpay_order_id;
             this.paymentPaymentId = response.razorpay_payment_id;
@@ -271,14 +268,16 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ─── Step 2: verify signature on backend → send team email ───────────────
+  // ─── Step 2: verify on backend, then send prescription image to team ──────
+  // FIX: After payment verified, also POST the prescription image to
+  //      /api/prescription/notify so the team email has the image as attachment.
   private async handlePaymentSuccess(orderId: string, paymentId: string, signature: string) {
     try {
-      // Build test list from extracted tests (if any), else send empty
       const testNames = this.extractedTests
         .filter(et => et.matched !== null)
         .map(et => et.matched!.name);
 
+      // 1) Verify payment — fires team email with test list (no image attachment here)
       const verifyRes = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -299,7 +298,10 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
         throw new Error(result.message || 'Payment verification failed');
       }
 
-      // Payment verified + email sent → show success screen
+      // 2) FIX: Send prescription image as attachment via /api/prescription/notify
+      //    This is the call that was missing — team email now has the image attached.
+      await this.sendPrescriptionImageToTeam();
+
       this.paymentSuccess = true;
       this.step = 'sent';
 
@@ -307,6 +309,55 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
       this.showError('Payment done but verification failed. Please contact support with Payment ID: ' + paymentId);
     } finally {
       this.sending = false;
+    }
+  }
+
+  // ─── Send prescription image as multipart to /api/prescription/notify ────
+  // Works for both: selectedFile (upload) and capturedDataUrl (webcam photo).
+  // On failure: logs error silently — payment is already verified, don't block user.
+  private async sendPrescriptionImageToTeam(): Promise<void> {
+    let fileToSend: File | null = null;
+
+    if (this.selectedFile) {
+      // Uploaded file — compress if image, send PDF as-is
+      if (this.selectedFile.type.startsWith('image/')) {
+        try {
+          const compressed = await this.compressBlob(this.selectedFile);
+          fileToSend = new File([compressed], this.selectedFile.name, { type: 'image/jpeg' });
+        } catch {
+          fileToSend = this.selectedFile; // fallback: original
+        }
+      } else {
+        fileToSend = this.selectedFile; // PDF
+      }
+    } else if (this.capturedDataUrl) {
+      // Webcam capture — convert base64 data URL → Blob → File
+      const blob = await fetch(this.capturedDataUrl).then(r => r.blob());
+      const compressed = await this.compressBlob(blob);
+      fileToSend = new File([compressed], 'prescription.jpg', { type: 'image/jpeg' });
+    }
+
+    if (!fileToSend) {
+      // No image (shouldn't happen), skip silently
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('userName',  this.userName.trim());
+    formData.append('userPhone', this.userPhone.trim());
+    formData.append('file', fileToSend, fileToSend.name);
+
+    // IMPORTANT: Do NOT set Content-Type header manually.
+    // Browser sets it automatically with the multipart boundary.
+    const res = await fetch(`${environment.apiUrl}/prescription/notify`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('[Prescription] Image attachment send failed:', err);
+      // Do NOT throw — payment is verified, image send is best-effort
     }
   }
 
@@ -322,9 +373,10 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Keep old sendToTeam as alias (used by template buttons) ─────────────
+  // ─── sendToTeam used by HTML template buttons ─────────────────────────────
   sendToTeam() { this.initiatePayment(); }
 
+  // ─── Compress image before uploading (reduces email size) ────────────────
   private compressBlob(blob: Blob): Promise<Blob> {
     return new Promise(resolve => {
       const img = new Image();
