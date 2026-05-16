@@ -268,16 +268,45 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ─── Step 2: verify on backend, then send prescription image to team ──────
-  // FIX: After payment verified, also POST the prescription image to
-  //      /api/prescription/notify so the team email has the image as attachment.
+  // ─── Step 2: encode image as base64 + verify payment in ONE call ────────
+  // Single /api/razorpay/verify-payment call carries image inside JSON body.
+  // Backend attaches it directly to the team email — ONE email, ONE attachment.
+  // No second HTTP call to /api/prescription/notify needed any more.
   private async handlePaymentSuccess(orderId: string, paymentId: string, signature: string) {
     try {
       const testNames = this.extractedTests
         .filter(et => et.matched !== null)
         .map(et => et.matched!.name);
 
-      // 1) Verify payment — fires team email with test list (no image attachment here)
+      // ── Encode prescription image to base64 ───────────────────────────────
+      let imageBase64: string | null = null;
+      let imageMime   = 'image/jpeg';
+      let imageName   = 'prescription.jpg';
+
+      if (this.capturedDataUrl) {
+        // Camera capture — data URL already contains base64, strip the prefix
+        const parts = this.capturedDataUrl.split(',');
+        imageBase64 = parts[1] ?? null;
+        imageMime   = 'image/jpeg';
+        imageName   = 'prescription-camera.jpg';
+      } else if (this.selectedFile) {
+        if (this.selectedFile.type.startsWith('image/')) {
+          // Compress then convert to base64
+          const compressed   = await this.compressBlob(this.selectedFile);
+          const dataUrl      = await this.blobToDataUrl(compressed);
+          imageBase64        = dataUrl.split(',')[1];
+          imageMime          = 'image/jpeg';
+          imageName          = this.selectedFile.name.replace(/\.[^.]+$/, '') + '.jpg';
+        } else if (this.selectedFile.type === 'application/pdf') {
+          // PDF — encode raw bytes
+          const dataUrl = await this.toDataUrl(this.selectedFile);
+          imageBase64   = dataUrl.split(',')[1];
+          imageMime     = 'application/pdf';
+          imageName     = this.selectedFile.name;
+        }
+      }
+
+      // ── Single verify call — image travels inside JSON body ───────────────
       const verifyRes = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -285,22 +314,20 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
           razorpay_order_id:   orderId,
           razorpay_payment_id: paymentId,
           razorpay_signature:  signature,
-          userName:  this.userName.trim(),
-          userPhone: this.userPhone.trim(),
-          tests:     testNames,
-          amount:    this.paymentAmount
+          userName:    this.userName.trim(),
+          userPhone:   this.userPhone.trim(),
+          tests:       testNames,
+          amount:      this.paymentAmount,
+          imageBase64: imageBase64,   // backend attaches this as email attachment
+          imageMime:   imageMime,
+          imageName:   imageName
         })
       });
 
       const result = await verifyRes.json();
-
       if (!verifyRes.ok || !result.success) {
         throw new Error(result.message || 'Payment verification failed');
       }
-
-      // 2) FIX: Send prescription image as attachment via /api/prescription/notify
-      //    This is the call that was missing — team email now has the image attached.
-      await this.sendPrescriptionImageToTeam();
 
       this.paymentSuccess = true;
       this.step = 'sent';
@@ -312,53 +339,14 @@ export class PrescriptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ─── Send prescription image as multipart to /api/prescription/notify ────
-  // Works for both: selectedFile (upload) and capturedDataUrl (webcam photo).
-  // On failure: logs error silently — payment is already verified, don't block user.
-  private async sendPrescriptionImageToTeam(): Promise<void> {
-    let fileToSend: File | null = null;
-
-    if (this.selectedFile) {
-      // Uploaded file — compress if image, send PDF as-is
-      if (this.selectedFile.type.startsWith('image/')) {
-        try {
-          const compressed = await this.compressBlob(this.selectedFile);
-          fileToSend = new File([compressed], this.selectedFile.name, { type: 'image/jpeg' });
-        } catch {
-          fileToSend = this.selectedFile; // fallback: original
-        }
-      } else {
-        fileToSend = this.selectedFile; // PDF
-      }
-    } else if (this.capturedDataUrl) {
-      // Webcam capture — convert base64 data URL → Blob → File
-      const blob = await fetch(this.capturedDataUrl).then(r => r.blob());
-      const compressed = await this.compressBlob(blob);
-      fileToSend = new File([compressed], 'prescription.jpg', { type: 'image/jpeg' });
-    }
-
-    if (!fileToSend) {
-      // No image (shouldn't happen), skip silently
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('userName',  this.userName.trim());
-    formData.append('userPhone', this.userPhone.trim());
-    formData.append('file', fileToSend, fileToSend.name);
-
-    // IMPORTANT: Do NOT set Content-Type header manually.
-    // Browser sets it automatically with the multipart boundary.
-    const res = await fetch(`${environment.apiUrl}/prescription/notify`, {
-      method: 'POST',
-      body: formData
+  // ── Convert Blob → data URL ───────────────────────────────────────────────
+  private blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader  = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error('[Prescription] Image attachment send failed:', err);
-      // Do NOT throw — payment is verified, image send is best-effort
-    }
   }
 
   // ─── Load Razorpay JS SDK once ────────────────────────────────────────────
