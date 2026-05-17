@@ -56,7 +56,16 @@ h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
 .best-badge { background: #E1F5EE; color: #085041; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; white-space: nowrap; }
 .accred-tag { background: #f3f3f3; color: #666; font-size: 10px; padding: 2px 7px; border-radius: 10px; }
 .lab-meta { font-size: 11px; color: #888; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.stars .filled { color: #BA7517; }
+.google-rating {
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.google-g { flex-shrink: 0; display: block; }
+.g-stars { display: inline-flex; align-items: center; }
+.g-stars span { color: #dadce0; font-size: 12px; line-height: 1; }
+.g-stars span.filled { color: #fbbc04; }
+.g-score {
+  font-size: 11px; font-weight: 700; color: #3c4043;
+}
 .dot { color: #ccc; }
 .price-book { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .price-col { text-align: right; }
