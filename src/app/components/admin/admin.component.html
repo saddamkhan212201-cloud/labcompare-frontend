@@ -111,7 +111,6 @@
     <div class="form-card">
       <h3>{{ editingTest ? '✏️ Edit Test — ' + editingTest.name : '➕ Add New Test' }}</h3>
 
-      <!-- FIX 3: Test name input with duplicate check -->
       <div class="form-grid">
         <div class="field-wrap">
           <label>Test Name *</label>
@@ -119,7 +118,7 @@
                  (input)="onTestNameInput()" />
         </div>
 
-        <!-- Category: fixed list + "Other" reveals free-text input -->
+        <!-- Category: fixed dropdown + "Other" reveals free-text -->
         <div class="field-wrap">
           <label>Category *</label>
           <select [(ngModel)]="categorySelection" (ngModelChange)="onCategorySelect($event)" class="cat-select">
@@ -144,7 +143,7 @@
             <option value="Pregnancy Tests">Pregnancy Tests</option>
             <option value="Microbiology Tests">Microbiology Tests</option>
             <option value="Preventive Health Check-up Packages">Preventive Health Check-up Packages</option>
-            <option value="__other__">+ Other (type custom)</option>
+            <option value="__other__">+ Other (type custom category)</option>
           </select>
           <!-- Shown only when "Other" is selected -->
           <input *ngIf="categorySelection === '__other__'"
@@ -160,7 +159,7 @@
         </div>
       </div>
 
-      <!-- FIX 4: Duplicate warning shown inline -->
+      <!-- Duplicate warning -->
       <div class="duplicate-warning" *ngIf="duplicateTestWarning">
         {{duplicateTestWarning}}
       </div>
@@ -173,12 +172,6 @@
             {{ editingTest ? '💾 Update Test' : '➕ Add Test' }}
           </button>
         </div>
-      </div>
-
-      <!-- Existing category chips — click to fill -->
-      <div *ngIf="categoryOptions.length > 0" class="cat-suggestions">
-        <span class="cat-label">Quick select:</span>
-        <span class="cat-chip" *ngFor="let cat of categoryOptions" (click)="selectCategory(cat)">{{cat}}</span>
       </div>
     </div>
 
@@ -216,7 +209,6 @@
     <div class="form-card">
       <h3>{{ editingPrice ? '✏️ Edit Price — ' + editingPrice.testName + ' @ ' + editingPrice.labName : '➕ Set Lab Price for Test' }}</h3>
       <div class="form-grid">
-        <!-- Lab dropdown -->
         <div class="field-wrap">
           <label>Lab *</label>
           <select [(ngModel)]="priceForm.labId" [disabled]="isRestricted || !!editingPrice">
@@ -225,7 +217,6 @@
           </select>
         </div>
 
-        <!-- Test dropdown — FIX 3 -->
         <div class="field-wrap">
           <label>Test *</label>
           <select [(ngModel)]="priceForm.testId" [disabled]="!!editingPrice">
@@ -257,7 +248,6 @@
         </div>
       </div>
 
-      <!-- Effective price preview -->
       <div class="price-preview" *ngIf="priceForm.price">
         <span>Effective price: </span>
         <strong>₹{{ priceForm.price - (priceForm.price * (priceForm.discountPercent || 0) / 100) | number:'1.0-0' }}</strong>

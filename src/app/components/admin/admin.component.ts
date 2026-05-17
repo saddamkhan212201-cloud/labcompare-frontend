@@ -15,14 +15,14 @@ import { TestsByCategoryPipe } from '../../pipes/tests-by-category.pipe';
 export class AdminComponent implements OnInit {
   activeTab = 'labs';
 
-  labs: Lab[]         = [];
-  tests: TestItem[]   = [];
-  prices: PriceDTO[]  = [];
+  labs: Lab[]            = [];
+  tests: TestItem[]      = [];
+  prices: PriceDTO[]     = [];
   bookings: BookingDTO[] = [];
 
   // ─── Forms ────────────────────────────────────────────────────────────────
-  labForm: any  = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
-  testForm: any = { name:'', category:'', description:'' };
+  labForm:   any = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
+  testForm:  any = { name:'', category:'', description:'' };
   priceForm: any = { labId:'', testId:'', price:'', discountPercent:0, reportDuration:'Same Day' };
 
   // ─── Edit state ───────────────────────────────────────────────────────────
@@ -30,8 +30,10 @@ export class AdminComponent implements OnInit {
   editingTest:  TestItem | null = null;
   editingPrice: PriceDTO | null = null;
 
-  // ─── Fixed category list (select dropdown — no free text) ───────────────
-  // Bound to the <select>; '__other__' triggers the free-text input
+  // ─── Category dropdown ────────────────────────────────────────────────────
+  // categorySelection is bound to the <select>.
+  // When '__other__' is chosen, the free-text input is revealed and the
+  // admin types directly into testForm.category.
   categorySelection = '';
 
   readonly categoryOptions: string[] = [
@@ -127,7 +129,7 @@ export class AdminComponent implements OnInit {
       this.showMsg('You can only edit your assigned lab', 'error'); return;
     }
     this.editingLab = lab;
-    this.labForm = { ...lab };
+    this.labForm    = { ...lab };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -142,22 +144,32 @@ export class AdminComponent implements OnInit {
 
   cancelEditLab() {
     this.editingLab = null;
-    this.labForm = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
+    this.labForm    = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
   }
 
   // ─── TESTS ────────────────────────────────────────────────────────────────
+
+  // Called when admin picks from the <select>.
+  // Known category → write to testForm.category immediately.
+  // '__other__'    → clear testForm.category so admin types into revealed input.
+  onCategorySelect(value: string) {
+    if (value === '__other__') {
+      this.testForm.category = '';
+    } else {
+      this.testForm.category = value;
+    }
+    this.checkDuplicateTest();
+  }
+
   onTestNameInput() {
     this.checkDuplicateTest();
   }
 
-  // FIX 4: Real-time duplicate detection
   checkDuplicateTest() {
     const name = (this.testForm.name || '').trim().toLowerCase();
     if (!name) { this.duplicateTestWarning = ''; return; }
     const editingId = this.editingTest?.id;
-    const exists = this.tests.find(t =>
-      t.name.toLowerCase() === name && t.id !== editingId
-    );
+    const exists    = this.tests.find(t => t.name.toLowerCase() === name && t.id !== editingId);
     this.duplicateTestWarning = exists
       ? `⚠️ A test named "${exists.name}" already exists (Category: ${exists.category})`
       : '';
@@ -166,8 +178,6 @@ export class AdminComponent implements OnInit {
   saveTest() {
     if (!this.testForm.name?.trim()) { this.showMsg('Test name is required', 'error'); return; }
     if (!this.testForm.category?.trim()) { this.showMsg('Category is required', 'error'); return; }
-
-    // FIX 4: Block duplicate submission
     if (this.duplicateTestWarning && !this.editingTest) {
       this.showMsg('Cannot add: a test with this name already exists', 'error'); return;
     }
@@ -194,11 +204,11 @@ export class AdminComponent implements OnInit {
   }
 
   editTest(test: TestItem) {
-    this.editingTest = test;
-    this.testForm    = { name: test.name, category: test.category, description: test.description };
+    this.editingTest          = test;
+    this.testForm             = { name: test.name, category: test.category, description: test.description };
     this.duplicateTestWarning = '';
-    // Pre-select dropdown: known category → select it; unknown → show Other + text input
-    this.categorySelection = this.categoryOptions.includes(test.category) ? test.category : '__other__';
+    // Pre-select dropdown: known category → select it; unknown/custom → show "Other" + text input
+    this.categorySelection    = this.categoryOptions.includes(test.category) ? test.category : '__other__';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -207,18 +217,6 @@ export class AdminComponent implements OnInit {
     this.testForm             = { name:'', category:'', description:'' };
     this.duplicateTestWarning = '';
     this.categorySelection    = '';
-  }
-
-  // Called when admin picks from the select.
-  // If a real category is picked → write it to testForm.category directly.
-  // If '__other__' is picked → clear testForm.category so admin types into the text input.
-  onCategorySelect(value: string) {
-    if (value === '__other__') {
-      this.testForm.category = '';   // admin will type in the revealed input
-    } else {
-      this.testForm.category = value;
-    }
-    this.checkDuplicateTest();
   }
 
   deleteTest(id: number) {
@@ -243,7 +241,6 @@ export class AdminComponent implements OnInit {
     if (!testId) { this.showMsg('Please select a test', 'error'); return; }
     if (!price || price <= 0) { this.showMsg('Please enter a valid price', 'error'); return; }
 
-    // FIX 4: Check duplicate price (same lab + test) when adding new
     if (!this.editingPrice) {
       const dup = this.prices.find(p => p.labId === labId && p.testId === testId);
       if (dup) {
@@ -273,19 +270,16 @@ export class AdminComponent implements OnInit {
 
   editPrice(price: PriceDTO) {
     this.editingPrice = price;
-    this.priceForm = {
-      labId: price.labId,
-      testId: price.testId,
-      price: price.price,
-      discountPercent: price.discountPercent,
-      reportDuration: price.reportDuration
+    this.priceForm    = {
+      labId: price.labId, testId: price.testId, price: price.price,
+      discountPercent: price.discountPercent, reportDuration: price.reportDuration
     };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   cancelEditPrice() {
     this.editingPrice = null;
-    this.priceForm = {
+    this.priceForm    = {
       labId: this.isRestricted ? this.restrictedLabId : '',
       testId: '', price: '', discountPercent: 0, reportDuration: 'Same Day'
     };
@@ -313,11 +307,6 @@ export class AdminComponent implements OnInit {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-  getTestName(testId: number): string {
-    return this.tests.find(t => t.id === testId)?.name || String(testId);
-  }
-
-  getLabName(labId: number): string {
-    return this.labs.find(l => l.id === labId)?.name || String(labId);
-  }
+  getTestName(testId: number): string { return this.tests.find(t => t.id === testId)?.name || String(testId); }
+  getLabName(labId: number):   string { return this.labs.find(l => l.id === labId)?.name   || String(labId); }
 }
