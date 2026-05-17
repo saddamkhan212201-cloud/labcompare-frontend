@@ -30,10 +30,32 @@ export class AdminComponent implements OnInit {
   editingTest:  TestItem | null = null;
   editingPrice: PriceDTO | null = null;
 
-  // ─── Test form: existing category suggestions ─────────────────────────────
-  categoryOptions: string[] = [];
-  showCatDropdown  = false;
-  filteredCategories: string[] = [];
+  // ─── Fixed category list (select dropdown — no free text) ───────────────
+  // Bound to the <select>; '__other__' triggers the free-text input
+  categorySelection = '';
+
+  readonly categoryOptions: string[] = [
+    'Blood Tests',
+    'Urine Tests',
+    'Stool Tests',
+    'Hormone Tests',
+    'Diabetes Tests',
+    'Thyroid Tests',
+    'Lipid Profile Tests',
+    'Liver Function Tests (LFT)',
+    'Kidney Function Tests (KFT)',
+    'Cardiac Marker Tests',
+    'Vitamin & Nutritional Tests',
+    'Infection & Fever Profile Tests',
+    'Allergy Tests',
+    'Cancer Marker Tests',
+    'Immunology Tests',
+    'Serology Tests',
+    'Coagulation Tests',
+    'Pregnancy Tests',
+    'Microbiology Tests',
+    'Preventive Health Check-up Packages'
+  ];
 
   // ─── Duplicate detection ──────────────────────────────────────────────────
   duplicateTestWarning = '';
@@ -69,11 +91,7 @@ export class AdminComponent implements OnInit {
 
   loadAll() {
     this.api.getLabs().subscribe(d => this.labs = d);
-    this.api.getTests().subscribe(d => {
-      this.tests = d;
-      // Extract unique categories for the dropdown
-      this.categoryOptions = [...new Set(d.map((t: TestItem) => t.category).filter(Boolean))].sort() as string[];
-    });
+    this.api.getTests().subscribe(d => { this.tests = d; });
     this.api.getAllPrices().subscribe(d => this.prices = d);
     this.api.getAllBookings().subscribe(d => this.bookings = d);
   }
@@ -128,20 +146,6 @@ export class AdminComponent implements OnInit {
   }
 
   // ─── TESTS ────────────────────────────────────────────────────────────────
-  // FIX 3: Category dropdown — filter as user types
-  onCategoryInput() {
-    const val = (this.testForm.category || '').toLowerCase();
-    this.filteredCategories = this.categoryOptions.filter(c => c.toLowerCase().includes(val));
-    this.showCatDropdown = this.filteredCategories.length > 0 && val.length > 0;
-    // FIX 4: Check duplicate test name as user types
-    this.checkDuplicateTest();
-  }
-
-  selectCategory(cat: string) {
-    this.testForm.category = cat;
-    this.showCatDropdown   = false;
-  }
-
   onTestNameInput() {
     this.checkDuplicateTest();
   }
@@ -174,10 +178,7 @@ export class AdminComponent implements OnInit {
 
     obs.subscribe({
       next: () => {
-        this.api.getTests().subscribe(d => {
-          this.tests = d;
-          this.categoryOptions = [...new Set(d.map((t: TestItem) => t.category).filter(Boolean))].sort() as string[];
-        });
+        this.api.getTests().subscribe(d => { this.tests = d; });
         this.cancelEditTest();
         this.showMsg(this.editingTest ? 'Test updated' : 'Test added');
       },
@@ -196,7 +197,8 @@ export class AdminComponent implements OnInit {
     this.editingTest = test;
     this.testForm    = { name: test.name, category: test.category, description: test.description };
     this.duplicateTestWarning = '';
-    this.showCatDropdown = false;
+    // Pre-select dropdown: known category → select it; unknown → show Other + text input
+    this.categorySelection = this.categoryOptions.includes(test.category) ? test.category : '__other__';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -204,7 +206,19 @@ export class AdminComponent implements OnInit {
     this.editingTest          = null;
     this.testForm             = { name:'', category:'', description:'' };
     this.duplicateTestWarning = '';
-    this.showCatDropdown      = false;
+    this.categorySelection    = '';
+  }
+
+  // Called when admin picks from the select.
+  // If a real category is picked → write it to testForm.category directly.
+  // If '__other__' is picked → clear testForm.category so admin types into the text input.
+  onCategorySelect(value: string) {
+    if (value === '__other__') {
+      this.testForm.category = '';   // admin will type in the revealed input
+    } else {
+      this.testForm.category = value;
+    }
+    this.checkDuplicateTest();
   }
 
   deleteTest(id: number) {

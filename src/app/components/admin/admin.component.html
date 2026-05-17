@@ -119,23 +119,39 @@
                  (input)="onTestNameInput()" />
         </div>
 
-        <!-- FIX 3: Category dropdown with existing categories -->
+        <!-- Category: fixed list + "Other" reveals free-text input -->
         <div class="field-wrap">
           <label>Category *</label>
-          <div class="autocomplete-wrap">
-            <input [(ngModel)]="testForm.category"
-                   placeholder="e.g. Blood, Thyroid, Radiology"
-                   (input)="onCategoryInput()"
-                   (blur)="showCatDropdown = false"
-                   (focus)="onCategoryInput()"
-                   autocomplete="off" />
-            <div class="autocomplete-dropdown" *ngIf="showCatDropdown">
-              <div class="autocomplete-item" *ngFor="let cat of filteredCategories"
-                   (mousedown)="selectCategory(cat)">
-                {{cat}}
-              </div>
-            </div>
-          </div>
+          <select [(ngModel)]="categorySelection" (ngModelChange)="onCategorySelect($event)" class="cat-select">
+            <option value="" disabled>— Select a category —</option>
+            <option value="Blood Tests">Blood Tests</option>
+            <option value="Urine Tests">Urine Tests</option>
+            <option value="Stool Tests">Stool Tests</option>
+            <option value="Hormone Tests">Hormone Tests</option>
+            <option value="Diabetes Tests">Diabetes Tests</option>
+            <option value="Thyroid Tests">Thyroid Tests</option>
+            <option value="Lipid Profile Tests">Lipid Profile Tests</option>
+            <option value="Liver Function Tests (LFT)">Liver Function Tests (LFT)</option>
+            <option value="Kidney Function Tests (KFT)">Kidney Function Tests (KFT)</option>
+            <option value="Cardiac Marker Tests">Cardiac Marker Tests</option>
+            <option value="Vitamin &amp; Nutritional Tests">Vitamin &amp; Nutritional Tests</option>
+            <option value="Infection &amp; Fever Profile Tests">Infection &amp; Fever Profile Tests</option>
+            <option value="Allergy Tests">Allergy Tests</option>
+            <option value="Cancer Marker Tests">Cancer Marker Tests</option>
+            <option value="Immunology Tests">Immunology Tests</option>
+            <option value="Serology Tests">Serology Tests</option>
+            <option value="Coagulation Tests">Coagulation Tests</option>
+            <option value="Pregnancy Tests">Pregnancy Tests</option>
+            <option value="Microbiology Tests">Microbiology Tests</option>
+            <option value="Preventive Health Check-up Packages">Preventive Health Check-up Packages</option>
+            <option value="__other__">+ Other (type custom)</option>
+          </select>
+          <!-- Shown only when "Other" is selected -->
+          <input *ngIf="categorySelection === '__other__'"
+                 [(ngModel)]="testForm.category"
+                 placeholder="Type custom category name…"
+                 class="cat-custom-input"
+                 (input)="checkDuplicateTest()" />
         </div>
 
         <div class="field-wrap full">
