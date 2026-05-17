@@ -3,51 +3,57 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Lab, TestItem, PriceDTO, BookingDTO } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { TestsByCategoryPipe } from '../../pipes/tests-by-category.pipe';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TestsByCategoryPipe],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
 })
 export class AdminComponent implements OnInit {
   activeTab = 'labs';
 
-  labs: Lab[] = [];
-  tests: TestItem[] = [];
-  prices: PriceDTO[] = [];
+  labs: Lab[]         = [];
+  tests: TestItem[]   = [];
+  prices: PriceDTO[]  = [];
   bookings: BookingDTO[] = [];
 
-  labForm: any = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
+  // ─── Forms ────────────────────────────────────────────────────────────────
+  labForm: any  = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
   testForm: any = { name:'', category:'', description:'' };
   priceForm: any = { labId:'', testId:'', price:'', discountPercent:0, reportDuration:'Same Day' };
-  editingLab: Lab | null = null;
+
+  // ─── Edit state ───────────────────────────────────────────────────────────
+  editingLab:   Lab      | null = null;
+  editingTest:  TestItem | null = null;
+  editingPrice: PriceDTO | null = null;
+
+  // ─── Test form: existing category suggestions ─────────────────────────────
+  categoryOptions: string[] = [];
+  showCatDropdown  = false;
+  filteredCategories: string[] = [];
+
+  // ─── Duplicate detection ──────────────────────────────────────────────────
+  duplicateTestWarning = '';
 
   msg = ''; msgType = 'success';
 
-  /** The lab this admin is restricted to. NULL = no restriction (superadmin path). */
   get restrictedLabId(): number | null { return this.auth.getAdminLabId(); }
   get isRestricted(): boolean { return this.restrictedLabId !== null; }
-
   get restrictedLabLabel(): string {
     const lab = this.labs.find(l => l.id === this.restrictedLabId);
     return lab ? lab.name : ('Lab #' + this.restrictedLabId);
   }
-
-  /** Labs visible to this admin */
   get visibleLabs(): Lab[] {
     if (!this.isRestricted) return this.labs;
     return this.labs.filter(l => l.id === this.restrictedLabId);
   }
-
-  /** Prices visible to this admin (only for their lab) */
   get visiblePrices(): PriceDTO[] {
     if (!this.isRestricted) return this.prices;
     return this.prices.filter(p => p.labId === this.restrictedLabId);
   }
-
-  /** Bookings for this admin's lab only */
   get visibleBookings(): BookingDTO[] {
     if (!this.isRestricted) return this.bookings;
     const labName = this.labs.find(l => l.id === this.restrictedLabId)?.name;
@@ -58,39 +64,43 @@ export class AdminComponent implements OnInit {
 
   ngOnInit() {
     this.loadAll();
-    // Pre-fill labId if restricted
-    if (this.isRestricted) {
-      this.priceForm.labId = this.restrictedLabId;
-    }
+    if (this.isRestricted) this.priceForm.labId = this.restrictedLabId;
   }
 
   loadAll() {
     this.api.getLabs().subscribe(d => this.labs = d);
-    this.api.getTests().subscribe(d => this.tests = d);
+    this.api.getTests().subscribe(d => {
+      this.tests = d;
+      // Extract unique categories for the dropdown
+      this.categoryOptions = [...new Set(d.map((t: TestItem) => t.category).filter(Boolean))].sort() as string[];
+    });
     this.api.getAllPrices().subscribe(d => this.prices = d);
     this.api.getAllBookings().subscribe(d => this.bookings = d);
   }
 
   showMsg(m: string, type = 'success') {
     this.msg = m; this.msgType = type;
-    setTimeout(() => this.msg = '', 3000);
+    setTimeout(() => this.msg = '', 4000);
   }
 
-  // ---- Labs ----
+  // ─── LABS ─────────────────────────────────────────────────────────────────
   saveLab() {
-    // Restricted admin can only edit their own lab
     if (this.isRestricted && this.editingLab && this.editingLab.id !== this.restrictedLabId) {
       this.showMsg('You can only edit your assigned lab', 'error'); return;
     }
-    const obs = this.editingLab ? this.api.updateLab(this.editingLab.id, this.labForm) : this.api.createLab(this.labForm);
+    if (!this.labForm.name?.trim() || !this.labForm.city?.trim()) {
+      this.showMsg('Lab name and city are required', 'error'); return;
+    }
+    const obs = this.editingLab
+      ? this.api.updateLab(this.editingLab.id, this.labForm)
+      : this.api.createLab(this.labForm);
     obs.subscribe({
       next: () => {
         this.api.getLabs().subscribe(d => this.labs = d);
-        this.labForm = { name:'',city:'',address:'',phone:'',rating:4.0,accreditation:'NABL',homeCollection:true };
-        this.editingLab = null;
-        this.showMsg('Lab saved');
+        this.cancelEditLab();
+        this.showMsg(this.editingLab ? 'Lab updated' : 'Lab added');
       },
-      error: e => this.showMsg(e?.error?.message || 'Error', 'error')
+      error: e => this.showMsg(e?.error?.message || 'Error saving lab', 'error')
     });
   }
 
@@ -100,67 +110,200 @@ export class AdminComponent implements OnInit {
     }
     this.editingLab = lab;
     this.labForm = { ...lab };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   deleteLab(id: number) {
     if (this.isRestricted) { this.showMsg('Not authorized to delete labs', 'error'); return; }
-    if (!confirm('Delete lab?')) return;
-    this.api.deleteLab(id).subscribe(() => {
-      this.labs = this.labs.filter(l => l.id !== id);
-      this.showMsg('Lab deleted');
+    if (!confirm('Delete this lab? This will also remove all associated prices.')) return;
+    this.api.deleteLab(id).subscribe({
+      next: () => { this.labs = this.labs.filter(l => l.id !== id); this.showMsg('Lab deleted'); },
+      error: e => this.showMsg(e?.error?.message || 'Error deleting lab', 'error')
     });
   }
 
   cancelEditLab() {
     this.editingLab = null;
-    this.labForm = { name:'',city:'',address:'',phone:'',rating:4.0,accreditation:'NABL',homeCollection:true };
+    this.labForm = { name:'', city:'', address:'', phone:'', rating:4.0, accreditation:'NABL', homeCollection:true };
   }
 
-  // ---- Tests ----
+  // ─── TESTS ────────────────────────────────────────────────────────────────
+  // FIX 3: Category dropdown — filter as user types
+  onCategoryInput() {
+    const val = (this.testForm.category || '').toLowerCase();
+    this.filteredCategories = this.categoryOptions.filter(c => c.toLowerCase().includes(val));
+    this.showCatDropdown = this.filteredCategories.length > 0 && val.length > 0;
+    // FIX 4: Check duplicate test name as user types
+    this.checkDuplicateTest();
+  }
+
+  selectCategory(cat: string) {
+    this.testForm.category = cat;
+    this.showCatDropdown   = false;
+  }
+
+  onTestNameInput() {
+    this.checkDuplicateTest();
+  }
+
+  // FIX 4: Real-time duplicate detection
+  checkDuplicateTest() {
+    const name = (this.testForm.name || '').trim().toLowerCase();
+    if (!name) { this.duplicateTestWarning = ''; return; }
+    const editingId = this.editingTest?.id;
+    const exists = this.tests.find(t =>
+      t.name.toLowerCase() === name && t.id !== editingId
+    );
+    this.duplicateTestWarning = exists
+      ? `⚠️ A test named "${exists.name}" already exists (Category: ${exists.category})`
+      : '';
+  }
+
   saveTest() {
-    this.api.createTest(this.testForm).subscribe({
-      next: () => { this.api.getTests().subscribe(d => this.tests = d); this.testForm = { name:'',category:'',description:'' }; this.showMsg('Test added'); },
-      error: e => this.showMsg(e?.error?.message || 'Error', 'error')
+    if (!this.testForm.name?.trim()) { this.showMsg('Test name is required', 'error'); return; }
+    if (!this.testForm.category?.trim()) { this.showMsg('Category is required', 'error'); return; }
+
+    // FIX 4: Block duplicate submission
+    if (this.duplicateTestWarning && !this.editingTest) {
+      this.showMsg('Cannot add: a test with this name already exists', 'error'); return;
+    }
+
+    const obs = this.editingTest
+      ? this.api.updateTest(this.editingTest.id, this.testForm)
+      : this.api.createTest(this.testForm);
+
+    obs.subscribe({
+      next: () => {
+        this.api.getTests().subscribe(d => {
+          this.tests = d;
+          this.categoryOptions = [...new Set(d.map((t: TestItem) => t.category).filter(Boolean))].sort() as string[];
+        });
+        this.cancelEditTest();
+        this.showMsg(this.editingTest ? 'Test updated' : 'Test added');
+      },
+      error: e => {
+        const msg = e?.error?.message || '';
+        if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already exists')) {
+          this.showMsg('A test with this name already exists', 'error');
+        } else {
+          this.showMsg(msg || 'Error saving test', 'error');
+        }
+      }
     });
+  }
+
+  editTest(test: TestItem) {
+    this.editingTest = test;
+    this.testForm    = { name: test.name, category: test.category, description: test.description };
+    this.duplicateTestWarning = '';
+    this.showCatDropdown = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  cancelEditTest() {
+    this.editingTest          = null;
+    this.testForm             = { name:'', category:'', description:'' };
+    this.duplicateTestWarning = '';
+    this.showCatDropdown      = false;
   }
 
   deleteTest(id: number) {
-    if (!confirm('Delete test?')) return;
-    this.api.deleteTest(id).subscribe(() => { this.tests = this.tests.filter(t => t.id !== id); this.showMsg('Test deleted'); });
-  }
-
-  // ---- Prices ----
-  savePrice() {
-    const payload = {
-      ...this.priceForm,
-      labId: this.isRestricted ? this.restrictedLabId! : Number(this.priceForm.labId),
-      testId: Number(this.priceForm.testId),
-      price: Number(this.priceForm.price),
-      discountPercent: Number(this.priceForm.discountPercent)
-    };
-    this.api.setPrice(payload).subscribe({
+    if (!confirm('Delete this test? This will also remove all associated prices.')) return;
+    this.api.deleteTest(id).subscribe({
       next: () => {
-        this.api.getAllPrices().subscribe(d => this.prices = d);
-        this.priceForm = { labId: this.isRestricted ? this.restrictedLabId : '', testId:'', price:'', discountPercent:0, reportDuration:'Same Day' };
-        this.showMsg('Price saved');
+        this.tests  = this.tests.filter(t => t.id !== id);
+        this.prices = this.prices.filter(p => p.testId !== id);
+        this.showMsg('Test deleted');
       },
-      error: e => this.showMsg(e?.error?.message || 'Error', 'error')
+      error: e => this.showMsg(e?.error?.message || 'Error deleting test', 'error')
     });
   }
 
-  deletePrice(id: number) {
-    if (!confirm('Delete price?')) return;
-    this.api.deletePrice(id).subscribe(() => { this.prices = this.prices.filter(p => p.id !== id); this.showMsg('Price deleted'); });
+  // ─── PRICES ───────────────────────────────────────────────────────────────
+  savePrice() {
+    const labId  = this.isRestricted ? this.restrictedLabId! : Number(this.priceForm.labId);
+    const testId = Number(this.priceForm.testId);
+    const price  = Number(this.priceForm.price);
+
+    if (!labId)  { this.showMsg('Please select a lab', 'error'); return; }
+    if (!testId) { this.showMsg('Please select a test', 'error'); return; }
+    if (!price || price <= 0) { this.showMsg('Please enter a valid price', 'error'); return; }
+
+    // FIX 4: Check duplicate price (same lab + test) when adding new
+    if (!this.editingPrice) {
+      const dup = this.prices.find(p => p.labId === labId && p.testId === testId);
+      if (dup) {
+        this.showMsg(`Price already set for "${dup.testName}" at "${dup.labName}". Use Edit to update it.`, 'error');
+        return;
+      }
+    }
+
+    const payload = {
+      ...this.priceForm, labId, testId, price,
+      discountPercent: Number(this.priceForm.discountPercent)
+    };
+
+    const obs = this.editingPrice
+      ? this.api.updatePrice(this.editingPrice.id, payload)
+      : this.api.setPrice(payload);
+
+    obs.subscribe({
+      next: () => {
+        this.api.getAllPrices().subscribe(d => this.prices = d);
+        this.cancelEditPrice();
+        this.showMsg(this.editingPrice ? 'Price updated' : 'Price saved');
+      },
+      error: e => this.showMsg(e?.error?.message || 'Error saving price', 'error')
+    });
   }
 
+  editPrice(price: PriceDTO) {
+    this.editingPrice = price;
+    this.priceForm = {
+      labId: price.labId,
+      testId: price.testId,
+      price: price.price,
+      discountPercent: price.discountPercent,
+      reportDuration: price.reportDuration
+    };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  cancelEditPrice() {
+    this.editingPrice = null;
+    this.priceForm = {
+      labId: this.isRestricted ? this.restrictedLabId : '',
+      testId: '', price: '', discountPercent: 0, reportDuration: 'Same Day'
+    };
+  }
+
+  deletePrice(id: number) {
+    if (!confirm('Delete this price entry?')) return;
+    this.api.deletePrice(id).subscribe({
+      next: () => { this.prices = this.prices.filter(p => p.id !== id); this.showMsg('Price deleted'); },
+      error: e => this.showMsg(e?.error?.message || 'Error deleting price', 'error')
+    });
+  }
+
+  // ─── BOOKINGS ─────────────────────────────────────────────────────────────
   cancelBooking(ref: string) {
     if (!confirm('Cancel this booking?')) return;
     this.api.cancelBooking(ref).subscribe({
-      next: updated => { const i = this.bookings.findIndex(b => b.bookingRef === ref); if (i > -1) this.bookings[i] = updated; }
+      next: updated => { const i = this.bookings.findIndex(b => b.bookingRef === ref); if (i > -1) this.bookings[i] = updated; },
+      error: e => this.showMsg(e?.error?.message || 'Error cancelling booking', 'error')
     });
   }
 
   statusClass(s: string) {
     return s === 'CONFIRMED' ? 'status-confirmed' : s === 'CANCELLED' ? 'status-cancelled' : 'status-completed';
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  getTestName(testId: number): string {
+    return this.tests.find(t => t.id === testId)?.name || String(testId);
+  }
+
+  getLabName(labId: number): string {
+    return this.labs.find(l => l.id === labId)?.name || String(labId);
   }
 }
