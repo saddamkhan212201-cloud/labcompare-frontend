@@ -1,8 +1,6 @@
 <div class="rx-page">
 
-  <!-- 
-       STEP: CHOOSE MODE
-   -->
+  <!-- STEP: CHOOSE MODE -->
   <div *ngIf="step === 'choose'" class="choose-screen">
     <div class="rx-hero">
       <div class="rx-hero-icon">
@@ -13,12 +11,10 @@
         </svg>
       </div>
       <h1>Prescription Scanner</h1>
-      <p>Upload or photo your doctor's prescription — our team will review it and call you with the best lab prices</p>
+      <p>Upload or photograph your doctor's prescription — our team will review it and call you with the best lab prices</p>
     </div>
 
     <div class="mode-cards">
-
-      <!-- Upload card -->
       <div class="mode-card" (click)="selectUpload()">
         <div class="mode-icon upload-icon">
           <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -32,7 +28,6 @@
         <button class="mode-btn">Select file</button>
       </div>
 
-      <!-- Camera card -->
       <div class="mode-card" (click)="selectCamera()">
         <div class="mode-icon camera-icon">
           <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -45,67 +40,39 @@
         <div class="mode-formats">Best for physical prescriptions</div>
         <button class="mode-btn">Open camera</button>
       </div>
-
     </div>
 
     <div class="rx-tips">
-      <div class="tip-item">
-        <span>💡</span> Make sure test names written by the doctor are clearly visible
-      </div>
-      <div class="tip-item">
-        <span>💡</span> Good lighting and sharp focus give the most accurate results
-      </div>
-      <div class="tip-item">
-        <span>📞</span> Our team will call you back within 30 minutes during working hours
-      </div>
-      <div class="tip-item">
-        <span>🔒</span> Your prescription is kept private and secure
-      </div>
+      <div class="tip-item"><span>💡</span> Make sure test names written by the doctor are clearly visible</div>
+      <div class="tip-item"><span>💡</span> Good lighting and sharp focus give the best results</div>
+      <div class="tip-item"><span>📞</span> Our team will call you back within 30 minutes during working hours</div>
+      <div class="tip-item"><span>🔒</span> Your prescription is kept private and secure</div>
     </div>
   </div>
 
 
-  <!-- 
-       STEP: UPLOAD FILE
-   -->
+  <!-- STEP: UPLOAD / PREVIEW (also used after camera capture) -->
   <div *ngIf="step === 'upload'" class="input-screen">
     <div class="screen-header">
       <button class="back-btn" (click)="goBack()">← Back</button>
       <h2>Upload Prescription</h2>
     </div>
 
-    <!-- User Details Form -->
+    <!-- User Details -->
     <div class="user-details-form">
       <div class="form-row">
         <div class="form-group">
           <label>Your Name <span class="req">*</span></label>
-          <input
-            [(ngModel)]="userName"
-            placeholder="Enter your full name"
-            [class.input-error]="nameError"
-            (input)="nameError = ''"
-          />
+          <input [(ngModel)]="userName" placeholder="Enter your full name"
+                 [class.input-error]="nameError" (input)="nameError = ''"/>
           <span class="field-error" *ngIf="nameError">{{ nameError }}</span>
         </div>
         <div class="form-group">
           <label>Phone Number <span class="req">*</span></label>
-          <input
-            [(ngModel)]="userPhone"
-            placeholder="Enter 10-digit phone number"
-            type="tel"
-            maxlength="10"
-            [class.input-error]="phoneError"
-            (input)="phoneError = ''"
-          />
+          <input [(ngModel)]="userPhone" placeholder="Enter 10-digit phone number"
+                 type="tel" maxlength="10"
+                 [class.input-error]="phoneError" (input)="phoneError = ''"/>
           <span class="field-error" *ngIf="phoneError">{{ phoneError }}</span>
-        </div>
-        <div class="form-group">
-          <label>Email <span style="font-size:0.78rem;color:#6b7280;font-weight:400;">(optional — confirmation will be sent here)</span></label>
-          <input
-            [(ngModel)]="userEmail"
-            placeholder="your@email.com"
-            type="email"
-          />
         </div>
       </div>
     </div>
@@ -119,7 +86,7 @@
          (drop)="onDrop($event)"
          (click)="fileInputEl.nativeElement.click()">
 
-      <ng-container *ngIf="!selectedFile">
+      <ng-container *ngIf="!selectedFile && !capturedDataUrl">
         <div class="dz-upload-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
             <path d="M24 8v24M14 18l10-10 10 10"/>
@@ -131,92 +98,62 @@
         <div class="dz-formats">JPG · PNG · WEBP · HEIC · PDF &nbsp;•&nbsp; Max 20 MB</div>
       </ng-container>
 
-      <ng-container *ngIf="selectedFile">
-        <img *ngIf="previewUrl" [src]="previewUrl" alt="Prescription preview" class="file-preview-img" />
-        <div *ngIf="!previewUrl" class="pdf-icon-wrap">
+      <ng-container *ngIf="selectedFile || capturedDataUrl">
+        <img *ngIf="previewUrl" [src]="previewUrl" alt="Prescription preview" class="file-preview-img"/>
+        <div *ngIf="!previewUrl && selectedFile" class="pdf-icon-wrap">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
             <path d="M12 44h24a4 4 0 004-4V16L28 4H12a4 4 0 00-4 4v32a4 4 0 004 4z"/>
             <path d="M28 4v12h12"/>
           </svg>
-          <span>{{ selectedFile.name }}</span>
+          <span>{{ selectedFile!.name }}</span>
         </div>
         <p class="change-hint">Tap to change file</p>
       </ng-container>
     </div>
 
-    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)" />
+    <input #fileInput type="file" accept="image/*,.pdf" style="display:none" (change)="onFileSelected($event)"/>
 
-    <!-- Pay & Send Button -->
-    <button
-      class="analyze-btn"
-      *ngIf="selectedFile"
-      (click)="sendToTeam()"
-      [disabled]="sending">
+    <!-- Send Button — no payment, direct send -->
+    <button class="analyze-btn" *ngIf="canSend()" (click)="sendToTeam()" [disabled]="sending">
       <svg *ngIf="!sending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
       </svg>
       <span class="btn-spinner" *ngIf="sending"></span>
-      {{ sending ? 'Opening Payment...' : 'Pay ₹' + paymentAmount + ' & Send to Team' }}
+      {{ sending ? 'Sending to team...' : 'Send Prescription to Team' }}
     </button>
 
     <!-- Hidden camera input for mobile -->
-    <input
-      #cameraInput
-      type="file"
-      accept="image/*"
-      capture="environment"
-      style="display:none"
-      (change)="onCameraFileCaptured($event)"
-    />
+    <input #cameraInput type="file" accept="image/*" capture="environment"
+           style="display:none" (change)="onCameraFileCaptured($event)"/>
   </div>
 
 
-  <!-- 
-       STEP: CAMERA
-   -->
+  <!-- STEP: CAMERA -->
   <div *ngIf="step === 'camera'" class="input-screen">
     <div class="screen-header">
       <button class="back-btn" (click)="goBack()">← Back</button>
       <h2>Take Photo</h2>
     </div>
 
-    <!-- User Details Form for camera mode -->
     <div class="user-details-form">
       <div class="form-row">
         <div class="form-group">
           <label>Your Name <span class="req">*</span></label>
-          <input
-            [(ngModel)]="userName"
-            placeholder="Enter your full name"
-            [class.input-error]="nameError"
-            (input)="nameError = ''"
-          />
+          <input [(ngModel)]="userName" placeholder="Enter your full name"
+                 [class.input-error]="nameError" (input)="nameError = ''"/>
           <span class="field-error" *ngIf="nameError">{{ nameError }}</span>
         </div>
         <div class="form-group">
           <label>Phone Number <span class="req">*</span></label>
-          <input
-            [(ngModel)]="userPhone"
-            placeholder="Enter 10-digit phone number"
-            type="tel"
-            maxlength="10"
-            [class.input-error]="phoneError"
-            (input)="phoneError = ''"
-          />
+          <input [(ngModel)]="userPhone" placeholder="Enter 10-digit phone number"
+                 type="tel" maxlength="10"
+                 [class.input-error]="phoneError" (input)="phoneError = ''"/>
           <span class="field-error" *ngIf="phoneError">{{ phoneError }}</span>
-        </div>
-        <div class="form-group">
-          <label>Email <span style="font-size:0.78rem;color:#6b7280;font-weight:400;">(optional — confirmation will be sent here)</span></label>
-          <input
-            [(ngModel)]="userEmail"
-            placeholder="your@email.com"
-            type="email"
-          />
         </div>
       </div>
     </div>
 
-    <!-- Camera error -->
     <div *ngIf="cameraError" class="camera-error">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
@@ -225,8 +162,7 @@
       <button class="mode-btn" (click)="selectUpload()">Switch to Upload</button>
     </div>
 
-    <!-- Live camera view -->
-    <div class="camera-wrap" *ngIf="!cameraError && !capturedDataUrl">
+    <div class="camera-wrap" *ngIf="!cameraError">
       <video #videoEl autoplay playsinline class="camera-video" [class.ready]="cameraReady"></video>
       <div *ngIf="!cameraReady" class="camera-loading">
         <div class="spinner"></div>
@@ -239,61 +175,30 @@
       <canvas #canvasEl style="display:none"></canvas>
     </div>
 
-    <!-- Capture button -->
-    <button class="capture-btn" *ngIf="cameraReady && !capturedDataUrl" (click)="capturePhoto()">
+    <button class="capture-btn" *ngIf="cameraReady" (click)="capturePhoto()">
       <span class="capture-ring"></span>
     </button>
-    <p class="capture-hint" *ngIf="cameraReady && !capturedDataUrl">Tap the button to capture</p>
-
-    <!-- Captured preview -->
-    <div *ngIf="capturedDataUrl" class="captured-wrap">
-      <img [src]="capturedDataUrl" alt="Captured prescription" class="captured-img" />
-      <div class="captured-actions">
-        <button class="retake-btn" (click)="retakePhoto()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 101.4-4.4L1 10"/>
-          </svg>
-          Retake
-        </button>
-
-        <button class="analyze-btn" (click)="sendToTeam()" [disabled]="sending">
-          <svg *ngIf="!sending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>
-          </svg>
-          <span class="btn-spinner" *ngIf="sending"></span>
-          {{ sending ? 'Opening Payment...' : 'Pay ₹' + paymentAmount + ' & Send to Team' }}
-        </button>
-      </div>
-    </div>
+    <p class="capture-hint" *ngIf="cameraReady">Tap to capture</p>
   </div>
 
 
-  <!-- 
-       STEP: SENT ✅
-   -->
+  <!-- STEP: SENT ✅ -->
   <div *ngIf="step === 'sent'" class="sent-screen">
     <div class="sent-card">
       <div class="sent-icon">✅</div>
-      <h2>Payment Successful!</h2>
-      <p class="sent-main">Our team will call you shortly on</p>
+      <h2>Prescription Sent!</h2>
+      <p class="sent-main">Our team will reach out to you shortly on</p>
       <div class="sent-phone">📞 {{ userPhone }}</div>
-      <p class="sent-sub">We usually respond within <strong>30 minutes</strong> during working hours (9 AM – 8 PM).</p>
+      <p class="sent-sub">
+        We usually respond within <strong>30 minutes</strong> during working hours (9 AM – 8 PM).<br/>
+        We will help you book the best lab test at the lowest price.
+      </p>
       <div class="sent-info">
         <div class="sent-info-row">
-          <span>👤 Name</span>
-          <span>{{ userName }}</span>
+          <span>👤 Name</span><span>{{ userName }}</span>
         </div>
         <div class="sent-info-row">
-          <span>📞 Phone</span>
-          <span>{{ userPhone }}</span>
-        </div>
-        <div class="sent-info-row">
-          <span>💳 Amount Paid</span>
-          <span class="paid-amount">₹{{ paymentAmount }}</span>
-        </div>
-        <div class="sent-info-row" *ngIf="paymentPaymentId">
-          <span>🆔 Payment ID</span>
-          <span class="payment-id">{{ paymentPaymentId }}</span>
+          <span>📞 Phone</span><span>{{ userPhone }}</span>
         </div>
       </div>
       <button class="analyze-btn" (click)="reset()">
@@ -306,9 +211,7 @@
   </div>
 
 
-  <!-- 
-       STEP: ERROR
-   -->
+  <!-- STEP: ERROR -->
   <div *ngIf="step === 'error'" class="error-screen">
     <div class="error-card">
       <div class="err-icon">⚠️</div>
