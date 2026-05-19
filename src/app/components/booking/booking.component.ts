@@ -34,12 +34,22 @@ export class BookingComponent implements OnInit {
   dates: { label: string; value: string }[] = [];
   slots = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
 
-  constructor(private api: ApiService, private router: Router, private zone: NgZone) {}
+  // Capture router state in constructor — getCurrentNavigation() is only valid here,
+  // not in ngOnInit (by then the navigation has already completed and returns null).
+  private navState: any;
+
+  constructor(private api: ApiService, private router: Router, private zone: NgZone) {
+    this.navState = this.router.getCurrentNavigation()?.extras?.state
+                   ?? window.history.state;
+  }
 
   ngOnInit() {
-    const nav = window.history.state;
-    if (nav?.price) { this.price = nav.price; }
-    else { this.router.navigate(['/search']); return; }
+    if (this.navState?.price) {
+      this.price = this.navState.price;
+    } else {
+      this.router.navigate(['/search']);
+      return;
+    }
     this.buildDates();
   }
 
