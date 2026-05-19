@@ -6,6 +6,11 @@ import { ApiService, TestItem, PriceDTO } from '../../services/api.service';
 import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
 import { PrescriptionComponent } from '../prescription/prescription.component';
 
+export interface CartItem {
+  price: PriceDTO;
+  testName: string;
+}
+
 @Component({
   selector: 'app-search',
   standalone: true,
@@ -25,8 +30,13 @@ export class SearchComponent implements OnInit {
   cityFilter = '';
   sortBy = 'price-asc';
   selectedTestId: number | null = null;
+  selectedTestName = '';
   loading = false;
   private search$ = new Subject<{q:string,cat:string}>();
+
+  // ─── Cart ─────────────────────────────────────────────────────────────────
+  cart: CartItem[] = [];
+  showCart = false;
 
   constructor(private api: ApiService, private router: Router) {}
 
@@ -63,7 +73,8 @@ export class SearchComponent implements OnInit {
   setCategory(cat: string) { this.selectedCategory = cat; this.onSearch(); }
 
   selectTest(test: TestItem) {
-    this.selectedTestId = test.id;
+    this.selectedTestId   = test.id;
+    this.selectedTestName = test.name;
     this.loading = true;
     this.api.searchPrices(test.id, this.cityFilter || undefined).subscribe({
       next: prices => { this.prices = prices; this.loading = false; },
@@ -96,7 +107,56 @@ export class SearchComponent implements OnInit {
     return name.split(' ').map(w => w[0]).slice(0,2).join('');
   }
 
+  // Existing single-test direct book (unchanged)
   bookNow(price: PriceDTO) {
     this.router.navigate(['/book'], { state: { price } });
+  }
+
+  // ─── CART METHODS ─────────────────────────────────────────────────────────
+
+  isInCart(priceId: number): boolean {
+    return this.cart.some(c => c.price.id === priceId);
+  }
+
+  testHasCartItem(testId: number): boolean {
+    return this.cart.some(c => c.price.testId === testId);
+  }
+
+  addToCart(price: PriceDTO) {
+    if (this.isInCart(price.id)) return;
+    // One selection per test — if same test already in cart from different lab, replace
+    const existingIdx = this.cart.findIndex(c => c.price.testId === price.testId);
+    if (existingIdx > -1) {
+      this.cart[existingIdx] = { price, testName: this.selectedTestName };
+    } else {
+      this.cart.push({ price, testName: this.selectedTestName });
+    }
+  }
+
+  removeFromCart(priceId: number) {
+    this.cart = this.cart.filter(c => c.price.id !== priceId);
+  }
+
+  clearCart() { this.cart = []; }
+
+  get cartTotal(): number {
+    return this.cart.reduce((sum, c) => sum + c.price.effectivePrice, 0);
+  }
+
+  get cartCount(): number { return this.cart.length; }
+
+  toggleCart() { this.showCart = !this.showCart; }
+
+  // Proceed to booking with all cart items
+  proceedToBook() {
+    if (this.cart.length === 0) return;
+    if (this.cart.length === 1) {
+      // Single item — use existing booking flow unchanged
+      this.router.navigate(['/book'], { state: { price: this.cart[0].price } });
+    } else {
+      // Multiple items — pass full cart to booking component
+      this.router.navigate(['/book'], { state: { cartItems: this.cart } });
+    }
+    this.showCart = false;
   }
 }

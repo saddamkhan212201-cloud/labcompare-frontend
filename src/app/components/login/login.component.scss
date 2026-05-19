@@ -93,6 +93,37 @@ input:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.1);
 .back-link { display: block; text-align: center; padding: 0 20px 18px; font-size: 13px; color: #1D9E75; text-decoration: none; cursor: pointer; }
 .back-link:hover { text-decoration: underline; }
 
+/* ─── Forgot password additions ─── */
+.forgot-link-row { display: flex; justify-content: flex-end; margin-top: -6px; }
+.forgot-link { font-size: 13px; color: #1D9E75; cursor: pointer; }
+.forgot-link:hover { text-decoration: underline; }
+
+.forgot-back-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px;
+}
+.forgot-back-btn {
+  border: none; background: none; color: #1D9E75;
+  font-size: 13px; cursor: pointer; padding: 0;
+}
+.forgot-back-btn:hover { text-decoration: underline; }
+.forgot-title { font-size: 15px; font-weight: 600; color: #333; }
+
+.forgot-desc { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
+
+.otp-notice {
+  background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; color: #2e7d32; line-height: 1.6;
+}
+.otp-notice span { font-size: 12px; color: #555; }
+
+.resend-otp-btn {
+  background: none; border: 1px solid #ddd; border-radius: 8px;
+  padding: 10px; font-size: 13px; color: #666; cursor: pointer;
+  width: 100%; text-align: center;
+}
+.resend-otp-btn:hover { background: #f5f5f5; }
+
 @media (max-width: 480px) {
   .login-page { padding: 12px; align-items: flex-start; padding-top: 40px; }
   .login-header { padding: 24px 20px 18px; }
