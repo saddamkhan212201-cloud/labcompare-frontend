@@ -1,3 +1,5 @@
+/* ─── PRESCRIPTION SCANNER ─── */
+
 $primary:   #6c63ff;
 $primary-d: #5a52d5;
 $success:   #10b981;
@@ -7,331 +9,327 @@ $muted:     #6b7280;
 $border:    #e5e7eb;
 $card:      #ffffff;
 $radius:    14px;
-$shadow:    0 2px 18px rgba(0, 0, 0, 0.07);
+$shadow:    0 2px 18px rgba(0,0,0,0.07);
 
 .rx-page {
-  max-width: 860px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 20px 12px 60px;
+  padding: 20px 16px 60px;
 }
 
-// ─── CHOOSE SCREEN ────────────────────────────────────────────────────────────
+/* ── Choose screen ── */
 .choose-screen { text-align: center; }
 
 .rx-hero {
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 
   .rx-hero-icon {
-    width: 64px; height: 64px;
+    width: 68px;
+    height: 68px;
     background: linear-gradient(135deg, $primary, #a78bfa);
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 14px;
-    svg { width: 32px; height: 32px; stroke: white; }
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(108,99,255,0.25);
+    svg { width: 34px; height: 34px; stroke: white; }
   }
 
-  h1 { font-size: 1.6rem; margin: 0 0 8px; color: $text; }
-  p  { color: $muted; font-size: 0.93rem; max-width: 420px; margin: 0 auto; line-height: 1.5; }
+  h1 {
+    font-size: 1.7rem;
+    margin: 0 0 10px;
+    color: $text;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+  }
+
+  p {
+    color: $muted;
+    font-size: 0.95rem;
+    max-width: 440px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
 }
 
+/* ── Mode cards ── */
 .mode-cards {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  max-width: 560px; margin: 0 auto 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 580px;
+  margin: 0 auto 28px;
 }
 
 .mode-card {
-  background: $card; border: 2px solid $border; border-radius: $radius;
-  padding: 24px 18px; cursor: pointer; transition: all 0.2s;
-  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: $card;
+  border: 2px solid $border;
+  border-radius: $radius;
+  padding: 26px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   -webkit-tap-highlight-color: transparent;
+  min-height: 180px;
+  justify-content: center;
 
-  &:hover { border-color: $primary; box-shadow: 0 4px 20px rgba($primary, 0.15); transform: translateY(-2px); }
-
-  h2 { margin: 0; font-size: 1.05rem; color: $text; }
-  p  { margin: 0; font-size: 0.83rem; color: $muted; line-height: 1.4; }
-
-  .mode-formats {
-    font-size: 0.75rem; color: $primary; background: #ede9fe;
-    border-radius: 20px; padding: 3px 10px; margin-top: 4px;
+  &:hover {
+    border-color: $primary;
+    box-shadow: 0 6px 24px rgba($primary, 0.14);
+    transform: translateY(-3px);
   }
+  &:active { transform: translateY(0); }
+
+  h2 { margin: 0; font-size: 1.05rem; color: $text; font-weight: 700; }
+  p  { margin: 0; font-size: 0.85rem; color: $muted; line-height: 1.4; }
 }
 
 .mode-icon {
-  width: 52px; height: 52px; border-radius: 14px;
-  display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
   svg { width: 26px; height: 26px; }
-  &.upload-icon { background: #e0f2fe; svg { stroke: #0369a1; } }
-  &.camera-icon { background: #fce7f3; svg { stroke: #9d174d; } }
+}
+
+.upload-icon  { background: #ede9ff; svg { stroke: $primary; } }
+.camera-icon  { background: #d1fae5; svg { stroke: $success; } }
+
+.mode-formats {
+  font-size: 11px;
+  color: #aaa;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .mode-btn {
-  background: $primary; color: white; border: none;
-  border-radius: 8px; padding: 9px 18px; font-size: 0.85rem;
-  font-weight: 600; cursor: pointer; margin-top: 4px; transition: background 0.2s;
-  &:hover { background: $primary-d; }
+  margin-top: 6px;
+  background: $primary;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-height: 40px;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode-btn:hover { background: $primary-d; }
+
+/* ── Upload drop zone ── */
+.dropzone {
+  border: 2.5px dashed $border;
+  border-radius: $radius;
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+  -webkit-tap-highlight-color: transparent;
+  max-width: 560px;
+  margin: 0 auto;
 }
 
-.rx-tips {
-  display: flex; flex-direction: column; gap: 8px; align-items: center;
-  .tip-item {
-    display: flex; align-items: flex-start; gap: 8px;
-    font-size: 0.83rem; color: $muted; text-align: left; max-width: 360px;
-    span { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-  }
+.dropzone:hover, .dropzone.drag-over {
+  border-color: $primary;
+  background: #f5f3ff;
 }
 
-// ─── INPUT SCREEN ─────────────────────────────────────────────────────────────
-.input-screen { display: flex; flex-direction: column; gap: 16px; }
-
-.screen-header {
-  display: flex; align-items: center; gap: 12px;
-  h2 { margin: 0; font-size: 1.2rem; color: $text; }
+.dropzone-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  background: #ede9ff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  svg { width: 28px; height: 28px; stroke: $primary; }
 }
 
-.back-btn {
-  background: none; border: 1.5px solid $border; border-radius: 8px;
-  padding: 7px 12px; font-size: 0.85rem; cursor: pointer; color: $muted;
-  transition: all 0.2s; white-space: nowrap;
-  &:hover { border-color: $primary; color: $primary; }
+.dropzone h3 { font-size: 15px; font-weight: 700; color: $text; margin: 0 0 6px; }
+.dropzone p  { font-size: 13px; color: $muted; margin: 0; line-height: 1.4; }
+
+/* ── Preview ── */
+.rx-preview {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-// ─── USER DETAILS FORM ────────────────────────────────────────────────────────
-.user-details-form {
-  background: white; border: 1.5px solid $border; border-radius: $radius;
-  padding: 16px 18px; box-shadow: $shadow;
-
-  .form-row { display: flex; gap: 14px; }
-
-  .form-group {
-    flex: 1; display: flex; flex-direction: column; gap: 5px;
-
-    label { font-size: 0.85rem; font-weight: 600; color: #374151; }
-    .req  { color: $danger; margin-left: 2px; }
-
-    input {
-      border: 1.5px solid $border; border-radius: 10px;
-      padding: 11px 13px; font-size: 16px; outline: none;
-      transition: border-color 0.2s; background: #fafafa; width: 100%;
-      &:focus        { border-color: $primary; background: white; }
-      &.input-error  { border-color: $danger; background: #fff5f5; }
-      &::placeholder { color: #aaa; }
-    }
-
-    .field-error { font-size: 0.76rem; color: $danger; margin-top: 2px; }
-  }
+.preview-img {
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  border-radius: $radius;
+  border: 1px solid $border;
+  background: #fafafa;
 }
 
-// ─── DROP ZONE ────────────────────────────────────────────────────────────────
-.drop-zone {
-  border: 2.5px dashed $border; border-radius: $radius; background: $card;
-  padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  min-height: 200px; justify-content: center;
-
-  &:hover, &.drag-over { border-color: $primary; background: #f8f7ff; }
-  &.has-file           { border-style: solid; border-color: $success; background: #f0fdf4; }
-
-  .dz-upload-icon {
-    width: 56px; height: 56px; background: #ede9fe; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    svg { width: 28px; height: 28px; stroke: $primary; }
-  }
-
-  .dz-title   { font-size: 1rem; font-weight: 600; color: $text; margin: 0; }
-  .dz-hint    { font-size: 0.85rem; color: $muted; margin: 0; }
-  .dz-formats { font-size: 0.78rem; color: $muted; }
+.preview-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.file-preview-img {
-  max-height: 240px; max-width: 100%; border-radius: 10px; object-fit: contain;
+/* ── Buttons ── */
+.btn-primary {
+  background: $primary;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
+  flex: 1;
+}
+.btn-primary:hover  { background: $primary-d; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background: white;
+  color: #444;
+  border: 1.5px solid $border;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-secondary:hover { background: #f5f5f5; }
+
+/* ── Form fields ── */
+.rx-form {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.pdf-icon-wrap {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  svg  { width: 48px; height: 48px; stroke: $primary; }
-  span { font-size: 0.88rem; font-weight: 500; color: $text; word-break: break-all; }
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
 }
 
-.change-hint { font-size: 0.8rem; color: $muted; margin: 0; }
+input, textarea, select {
+  border: 1.5px solid $border;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 16px !important;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  background: #fafafa;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  color: $text;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: $primary;
+  box-shadow: 0 0 0 3px rgba($primary, 0.10);
+  background: #fff;
+}
+textarea { resize: vertical; min-height: 80px; }
 
-// ─── PAY & SEND BUTTON ────────────────────────────────────────────────────────
-.analyze-btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: linear-gradient(135deg, $primary, #a78bfa);
-  color: white; border: none; padding: 13px 32px;
-  border-radius: 12px; font-size: 0.95rem; font-weight: 700;
-  cursor: pointer; transition: all 0.2s;
-  box-shadow: 0 4px 14px rgba($primary, 0.3);
-  align-self: center; -webkit-tap-highlight-color: transparent;
-
-  svg { width: 18px; height: 18px; stroke: white; }
-
-  &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba($primary, 0.4); }
-  &:disabled             { opacity: 0.7; cursor: not-allowed; transform: none; }
+/* ── Success state ── */
+.rx-success {
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-.btn-spinner {
-  width: 18px; height: 18px;
-  border: 2.5px solid rgba(255, 255, 255, 0.4); border-top-color: white;
-  border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
+.success-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, $success, #34d399);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 32px;
 }
 
-// ─── CAMERA ───────────────────────────────────────────────────────────────────
-.camera-wrap {
-  position: relative; background: #000; border-radius: $radius;
-  overflow: hidden; min-height: 260px;
-  display: flex; align-items: center; justify-content: center;
-}
+.rx-success h2 { font-size: 1.4rem; font-weight: 700; color: $text; margin: 0 0 10px; }
+.rx-success p  { color: $muted; font-size: 0.95rem; line-height: 1.55; }
 
-.camera-video {
-  width: 100%; max-height: 420px; display: block; object-fit: cover;
-  opacity: 0; transition: opacity 0.4s;
-  &.ready { opacity: 1; }
-}
+/* ── Alert ── */
+.alert { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
+.alert-error   { background: #fff1f1; color: #A32D2D; border: 1px solid #f5c6c6; }
+.alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
 
-.camera-loading {
-  position: absolute; display: flex; flex-direction: column;
-  align-items: center; gap: 12px; color: white;
-  p { margin: 0; font-size: 0.9rem; }
-}
-
+/* ── Loading spinner ── */
 .spinner {
-  width: 32px; height: 32px;
-  border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: white;
-  border-radius: 50%; animation: spin 0.8s linear infinite;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
 }
-
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.camera-guide {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none;
+/* ═══════════════════════════════════════════
+   MOBILE (≤600px)
+═══════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .rx-page { padding: 14px 12px 48px; }
 
-  .guide-frame {
-    width: 82%; height: 68%;
-    border: 2.5px solid rgba(255, 255, 255, 0.7); border-radius: 12px;
-    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.35);
+  .rx-hero {
+    margin-bottom: 22px;
+    h1 { font-size: 1.4rem; }
+    p  { font-size: 0.88rem; }
   }
 
-  .guide-hint {
-    margin: 10px 0 0; color: white; font-size: 0.85rem;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  }
-}
+  .rx-hero-icon { width: 58px; height: 58px; }
 
-.capture-btn {
-  display: block; margin: 14px auto;
-  width: 66px; height: 66px; border-radius: 50%;
-  border: 4px solid $primary; background: white;
-  cursor: pointer; position: relative; transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-
-  .capture-ring {
-    position: absolute; inset: 4px;
-    background: $primary; border-radius: 50%; display: block;
+  /* Stack mode cards */
+  .mode-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  &:hover .capture-ring { background: $primary-d; }
-  &:active              { transform: scale(0.93); }
+  .mode-card { flex-direction: row; text-align: left; min-height: auto; padding: 18px 16px; gap: 14px; }
+  .mode-icon { flex-shrink: 0; margin-bottom: 0; }
+
+  .mode-card h2 { font-size: 0.95rem; }
+  .mode-card p  { font-size: 0.82rem; }
+  .mode-btn { padding: 9px 16px; font-size: 12px; min-height: 36px; }
+
+  .dropzone { padding: 28px 16px; }
+
+  .preview-actions { flex-direction: column; }
+  .btn-primary, .btn-secondary { width: 100%; min-height: 56px; flex: none; }
 }
 
-.capture-hint { text-align: center; font-size: 0.85rem; color: $muted; margin: 0; }
-
-.camera-error {
-  background: #fef2f2; border: 1.5px solid #fecaca;
-  border-radius: $radius; padding: 20px; text-align: center;
-  svg { width: 30px; height: 30px; stroke: $danger; margin-bottom: 10px; }
-  p   { color: $danger; margin: 0 0 14px; font-size: 0.9rem; }
-}
-
-.captured-wrap { display: flex; flex-direction: column; gap: 14px; }
-
-.captured-img {
-  width: 100%; max-height: 320px; object-fit: contain;
-  border-radius: $radius; border: 1.5px solid $border;
-}
-
-.captured-actions {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;
-}
-
-.retake-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  border: 1.5px solid $border; background: white; color: $muted;
-  border-radius: 10px; padding: 11px 16px; font-size: 0.88rem; cursor: pointer;
-  svg { width: 15px; height: 15px; }
-  &:hover { border-color: $primary; color: $primary; }
-}
-
-// ─── SENT SCREEN ──────────────────────────────────────────────────────────────
-.sent-screen { display: flex; justify-content: center; padding: 24px 0; }
-
-.sent-card {
-  background: $card; border-radius: $radius; box-shadow: $shadow;
-  padding: 36px 24px; text-align: center;
-  max-width: 440px; width: 100%;
-  border: 1.5px solid #d1fae5;
-
-  .sent-icon  { font-size: 3rem; margin-bottom: 14px; display: block; }
-  h2          { margin: 0 0 10px; color: $text; font-size: 1.4rem; }
-  .sent-main  { color: $muted; font-size: 0.93rem; margin: 0 0 8px; }
-  .sent-phone { font-size: 1.2rem; font-weight: 800; color: $primary; margin-bottom: 14px; letter-spacing: 1px; }
-  .sent-sub   { color: $muted; font-size: 0.86rem; margin: 0 0 20px; line-height: 1.6; }
-
-  .sent-info {
-    background: #f8f7ff; border: 1.5px solid #ede9fe; border-radius: 10px;
-    padding: 12px 16px; margin-bottom: 20px; text-align: left;
-
-    .sent-info-row {
-      display: flex; justify-content: space-between;
-      padding: 6px 0; font-size: 0.86rem;
-      border-bottom: 1px solid #ede9fe; gap: 10px;
-
-      &:last-child { border-bottom: none; }
-
-      span:first-child { color: $muted; flex-shrink: 0; }
-      span:last-child  { color: $text; font-weight: 600; word-break: break-all; text-align: right; }
-    }
-
-    .paid-amount { color: $success !important; font-size: 1rem !important; }
-    .payment-id  { font-family: monospace !important; font-size: 0.78rem !important; color: $muted !important; }
-  }
-}
-
-// ─── ERROR SCREEN ─────────────────────────────────────────────────────────────
-.error-screen { display: flex; justify-content: center; padding: 24px 0; }
-
-.error-card {
-  background: $card; border-radius: $radius; box-shadow: $shadow;
-  padding: 36px 24px; text-align: center; max-width: 420px; width: 100%;
-
-  .err-icon { font-size: 2.6rem; margin-bottom: 12px; }
-  h3        { margin: 0 0 8px; color: $text; font-size: 1.15rem; }
-  p         { margin: 0 0 20px; color: $muted; font-size: 0.9rem; line-height: 1.6; }
-}
-
-.err-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
-// ─── MOBILE ───────────────────────────────────────────────────────────────────
-@media (max-width: 540px) {
-  .rx-page { padding: 14px 10px 50px; }
-  .rx-hero h1 { font-size: 1.35rem; }
-
-  .mode-cards { grid-template-columns: 1fr; max-width: 320px; }
-
-  .mode-card {
-    padding: 20px 16px; flex-direction: row; text-align: left;
-    gap: 14px; align-items: flex-start;
-    h2 { font-size: 1rem; }
-  }
-
-  .mode-icon { flex-shrink: 0; }
-
-  .user-details-form .form-row { flex-direction: column; }
-
-  .analyze-btn { width: 100%; justify-content: center; padding: 14px 20px; }
-
-  .sent-card  { padding: 28px 18px; }
-  .error-card { padding: 28px 18px; }
+@media (max-width: 380px) {
+  .mode-card { flex-direction: column; text-align: center; }
+  .mode-icon { margin: 0 auto; }
 }

@@ -1,42 +1,167 @@
+/* ─── NAVBAR ─── Amazon/Flipkart-quality responsive navbar */
+
 .navbar {
   background: #1D9E75;
   padding: 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   position: sticky;
   top: 0;
   z-index: 200;
+  /* Safe area for notch phones */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
+
 .nav-container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 56px;
+  gap: 8px;
 }
-.nav-brand { display: flex; align-items: center; gap: 10px; }
+
+/* ── Brand ── */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .brand-icon {
-  width: 34px; height: 34px;
+  width: 36px;
+  height: 36px;
   background: rgba(255,255,255,0.2);
   border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
-.brand-name { font-size: 17px; font-weight: 600; color: white; }
 
-.nav-links { display: flex; gap: 6px; align-items: center; }
+.brand-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+/* ── Nav links (desktop) ── */
+.nav-links {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+}
+
 .nav-links a {
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.88);
   text-decoration: none;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 6px;
   font-size: 14px;
-  transition: all 0.15s;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
 }
-.nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.2); color: white; }
-.nav-links .admin-link { background: rgba(0,0,0,0.15); color: white; }
 
+.nav-links a:hover,
+.nav-links a.active {
+  background: rgba(255,255,255,0.18);
+  color: white;
+}
+
+.nav-links .admin-link {
+  background: rgba(0,0,0,0.15);
+  color: white;
+}
+
+.nav-links .admin-link:hover {
+  background: rgba(0,0,0,0.25);
+}
+
+.super-link {
+  color: #c4b5fd !important;
+  font-weight: 700;
+}
+
+.super-link:hover {
+  color: white !important;
+  background: rgba(124,58,237,0.3) !important;
+}
+
+.login-link {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  font-weight: 600;
+}
+
+.login-link:hover {
+  background: rgba(255,255,255,0.28) !important;
+}
+
+/* ── User info block ── */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  margin-left: 4px;
+}
+
+.username {
+  font-size: 13px;
+  color: rgba(255,255,255,0.92);
+  font-weight: 500;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.role-chip.admin { background: rgba(252,228,236,0.3); color: #fce4ec; }
+.role-chip.super { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; }
+
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  min-height: 36px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.logout-btn:hover { background: rgba(255,255,255,0.28); }
+
+/* ── Hamburger button ── */
 .hamburger {
   display: none;
   flex-direction: column;
@@ -46,94 +171,134 @@
   cursor: pointer;
   padding: 8px;
   -webkit-tap-highlight-color: transparent;
-  min-width: 40px;
-  min-height: 40px;
+  /* Large 44x44 touch target (Apple HIG) */
+  min-width: 44px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  transition: background 0.15s;
+  flex-shrink: 0;
 }
-.hamburger span { display: block; width: 22px; height: 2px; background: white; border-radius: 2px; transition: all 0.2s; }
 
-.user-info { display: flex; align-items: center; gap: 8px; }
-.username { font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 500; }
-.role-chip {
-  font-size: 11px; font-weight: 600;
-  padding: 2px 8px; border-radius: 10px;
-  background: rgba(255,255,255,0.2); color: #fff;
-  text-transform: uppercase; letter-spacing: 0.4px;
+.hamburger:hover { background: rgba(255,255,255,0.15); }
+.hamburger:active { background: rgba(255,255,255,0.25); }
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  transform-origin: center;
 }
-.role-chip.admin { background: rgba(252,228,236,0.3); color: #fce4ec; }
-.role-chip.super { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; }
 
-.logout-btn {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: #fff; border-radius: 6px;
-  padding: 5px 12px; font-size: 12px;
-  cursor: pointer; transition: background 0.15s; white-space: nowrap;
-}
-.logout-btn:hover { background: rgba(255,255,255,0.25); }
-.login-link { background: rgba(255,255,255,0.15) !important; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 5px 14px !important; }
-.super-link { color: #c4b5fd !important; font-weight: 700; }
-.super-link:hover { color: white !important; }
-.rx-link { font-weight: 600; }
-
-/* Animated hamburger */
+/* X animation */
 .hamburger span.rot45    { transform: rotate(45deg) translate(5px, 5px); }
-.hamburger span.hide     { opacity: 0; transform: translateX(-8px); }
+.hamburger span.hide     { opacity: 0; transform: translateX(-8px) scaleX(0.5); }
 .hamburger span.rotneg45 { transform: rotate(-45deg) translate(5px, -5px); }
 
-/* Backdrop overlay */
+/* ── Backdrop overlay ── */
 .menu-backdrop {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.45);
   z-index: 198;
-  animation: fadeIn 0.2s;
+  animation: backdropIn 0.2s ease;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-@media (max-width: 700px) {
-  .nav-container { height: 54px; padding: 0 0.75rem; }
+@keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── MOBILE breakpoint (≤768px) ── */
+@media (max-width: 768px) {
+  .nav-container {
+    height: 54px;
+    padding: 0 12px;
+  }
+
+  .brand-name { font-size: 17px; }
+
+  /* Show hamburger, hide desktop links */
   .hamburger { display: flex; }
   .menu-backdrop { display: block; }
 
   .nav-links {
+    /* Slide-in drawer from top */
     display: none;
     position: fixed;
     top: 54px;
-    left: 0; right: 0;
+    left: 0;
+    right: 0;
     background: #1D9E75;
     flex-direction: column;
-    padding: 0.75rem;
+    align-items: stretch;
+    padding: 8px 12px 16px;
     z-index: 199;
-    gap: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    max-height: calc(100vh - 54px);
+    gap: 2px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    max-height: calc(100dvh - 54px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* Smooth slide-down animation */
+    animation: none;
   }
-  .nav-links.open { display: flex; }
+
+  .nav-links.open {
+    display: flex;
+    animation: slideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   .nav-links a {
+    /* Full-width touch-friendly rows */
     padding: 14px 16px;
-    font-size: 16px;
+    font-size: 15px;
+    font-weight: 500;
     border-radius: 8px;
-    width: 100%;
-    display: block;
+    display: flex;
+    align-items: center;
+    min-height: 52px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
+
+  .nav-links a:last-of-type { border-bottom: none; }
+
   .user-info {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 10px;
+    padding: 14px 16px;
     border-top: 1px solid rgba(255,255,255,0.15);
+    border-left: none;
+    margin-left: 0;
     margin-top: 4px;
     width: 100%;
   }
-  .username { font-size: 15px; }
-  .role-chip { font-size: 12px; }
+
+  .username { font-size: 15px; max-width: none; }
+  .role-chip { font-size: 11px; }
+
   .logout-btn {
-    width: 100%; text-align: center;
-    padding: 12px; font-size: 15px; margin-top: 2px;
+    width: 100%;
+    text-align: center;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    min-height: 52px;
   }
+}
+
+/* ── Small phones (≤380px) ── */
+@media (max-width: 380px) {
+  .brand-name { font-size: 15px; }
+  .brand-icon { width: 32px; height: 32px; }
 }
