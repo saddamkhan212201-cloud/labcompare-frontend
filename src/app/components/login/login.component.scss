@@ -1,47 +1,35 @@
 .login-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #e8f5f0 0%, #f0f4ff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   padding: 16px;
 }
-
 .login-card {
-  background: #fff;
-  border-radius: 16px;
+  background: #fff; border-radius: 16px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.10);
-  width: 100%;
-  max-width: 420px;
-  overflow: hidden;
+  width: 100%; max-width: 420px; overflow: hidden;
 }
-
 .login-header {
   background: linear-gradient(135deg, #1D9E75, #0d6e53);
-  padding: 28px 24px 22px;
-  text-align: center;
-  color: #fff;
+  padding: 28px 24px 22px; text-align: center; color: #fff;
 }
-
 .brand-icon {
   width: 52px; height: 52px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 14px;
+  background: rgba(255,255,255,0.2); border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 10px;
 }
-
 .login-header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
 .login-header p { margin: 0; font-size: 13px; opacity: 0.85; }
 
 .tab-row { display: flex; border-bottom: 1px solid #f0f0f0; }
 .tab-btn {
-  flex: 1; padding: 14px;
-  border: none; background: none;
+  flex: 1; padding: 14px; border: none; background: none;
   font-size: 15px; font-weight: 500; color: #888;
   cursor: pointer; transition: all 0.15s;
   border-bottom: 2px solid transparent;
   -webkit-tap-highlight-color: transparent;
+  min-height: 48px;
 }
 .tab-btn.active { color: #1D9E75; border-bottom-color: #1D9E75; background: #f8fffc; }
 
@@ -62,9 +50,10 @@ input:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.1);
 
 .submit-btn {
   background: #1D9E75; color: white; border: none;
-  border-radius: 8px; padding: 13px;
-  font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: background 0.15s; margin-top: 4px; width: 100%;
+  border-radius: 8px; padding: 14px; font-size: 16px;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+  margin-top: 4px; width: 100%; min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
 }
 .submit-btn:hover, .submit-btn:active { background: #0F6E56; }
 .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -93,39 +82,35 @@ input:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.1);
 .back-link { display: block; text-align: center; padding: 0 20px 18px; font-size: 13px; color: #1D9E75; text-decoration: none; cursor: pointer; }
 .back-link:hover { text-decoration: underline; }
 
-/* ─── Forgot password additions ─── */
 .forgot-link-row { display: flex; justify-content: flex-end; margin-top: -6px; }
 .forgot-link { font-size: 13px; color: #1D9E75; cursor: pointer; }
 .forgot-link:hover { text-decoration: underline; }
 
 .forgot-back-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 12px 20px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px;
+  padding: 12px 20px; border-bottom: 1px solid #f0f0f0;
 }
-.forgot-back-btn {
-  border: none; background: none; color: #1D9E75;
-  font-size: 13px; cursor: pointer; padding: 0;
-}
+.forgot-back-btn { border: none; background: none; color: #1D9E75; font-size: 13px; cursor: pointer; padding: 0; min-height: 40px; }
 .forgot-back-btn:hover { text-decoration: underline; }
 .forgot-title { font-size: 15px; font-weight: 600; color: #333; }
 
 .forgot-desc { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
-
 .otp-notice {
-  background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px;
-  padding: 12px 14px; font-size: 13px; color: #2e7d32; line-height: 1.6;
+  background: #e8f5e9; border: 1px solid #c8e6c9;
+  border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #2e7d32; line-height: 1.6;
 }
 .otp-notice span { font-size: 12px; color: #555; }
 
 .resend-otp-btn {
   background: none; border: 1px solid #ddd; border-radius: 8px;
-  padding: 10px; font-size: 13px; color: #666; cursor: pointer;
-  width: 100%; text-align: center;
+  padding: 12px; font-size: 14px; color: #666; cursor: pointer;
+  width: 100%; text-align: center; min-height: 48px;
 }
 .resend-otp-btn:hover { background: #f5f5f5; }
 
 @media (max-width: 480px) {
-  .login-page { padding: 12px; align-items: flex-start; padding-top: 40px; }
-  .login-header { padding: 24px 20px 18px; }
-  .login-header h1 { font-size: 20px; }
+  .login-page { padding: 0; align-items: flex-start; }
+  .login-card { border-radius: 0; min-height: 100vh; box-shadow: none; }
+  .login-header { padding: 32px 20px 20px; }
+  .login-header h1 { font-size: 22px; }
 }
