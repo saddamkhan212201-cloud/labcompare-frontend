@@ -1,13 +1,26 @@
 <div class="page-container">
   <div class="booking-wrap">
 
-    <!-- Test summary banner -->
-    <div class="test-banner" *ngIf="price">
+    <!-- Banner: single test -->
+    <div class="test-banner" *ngIf="!isCartMode && price">
       <div>
         <div class="test-banner-name">{{price.testName}}</div>
         <div class="test-banner-meta">{{price.labName}} &nbsp;•&nbsp; {{price.labCity}} &nbsp;•&nbsp; {{price.labAccreditation}}</div>
       </div>
       <div class="test-banner-price">₹{{price.effectivePrice | number:'1.0-0'}}</div>
+    </div>
+
+    <!-- Banner: multiple tests (cart) -->
+    <div class="test-banner" *ngIf="isCartMode">
+      <div>
+        <div class="test-banner-name">{{cartItems.length}} Tests</div>
+        <div class="test-banner-meta">
+          <span *ngFor="let item of cartItems; let last = last">
+            {{item.testName}} @ {{item.price.labName}}<span *ngIf="!last"> &nbsp;·&nbsp; </span>
+          </span>
+        </div>
+      </div>
+      <div class="test-banner-price">₹{{total - collectionFee | number:'1.0-0'}}</div>
     </div>
 
     <!-- Stepper -->
@@ -68,7 +81,7 @@
         <span class="err-msg" *ngIf="errors['address']">{{errors['address']}}</span>
       </div>
       <div class="step-actions">
-        <button class="btn-primary" (click)="next()">Next: Pick a slot </button>
+        <button class="btn-primary" (click)="next()">Next: Pick a slot →</button>
       </div>
     </div>
 
@@ -91,7 +104,7 @@
       </div>
       <div class="step-actions">
         <button class="btn-secondary" (click)="back()">← Back</button>
-        <button class="btn-primary" (click)="next()">Review Booking </button>
+        <button class="btn-primary" (click)="next()">Review Booking →</button>
       </div>
     </div>
 
@@ -101,15 +114,25 @@
       <div class="summary-card">
         <div class="summary-row"><span>Patient</span><span>{{form.patientName}} <span *ngIf="form.patientAge">(Age {{form.patientAge}})</span></span></div>
         <div class="summary-row"><span>Phone</span><span>{{form.phone}}</span></div>
-        <div class="summary-row"><span>Collection</span><span>{{form.collectionType==='HOME' ? 'Home - '+form.collectionAddress : 'Visit Lab - '+price?.labName}}</span></div>
+        <div class="summary-row"><span>Collection</span><span>{{form.collectionType==='HOME' ? 'Home - '+form.collectionAddress : 'Visit Lab'}}</span></div>
         <div class="summary-row"><span>Date &amp; time</span><span>{{form.appointmentDate}} at {{form.appointmentSlot}}</span></div>
         <div class="summary-divider"></div>
-        <div class="summary-row"><span>Test fee</span><span>₹{{price?.effectivePrice | number:'1.0-0'}}</span></div>
+
+        <!-- Single test fee row -->
+        <div class="summary-row" *ngIf="!isCartMode">
+          <span>Test fee</span><span>₹{{price?.effectivePrice | number:'1.0-0'}}</span>
+        </div>
+
+        <!-- Per-test rows for cart -->
+        <div class="summary-row" *ngFor="let item of cartItems" [style.display]="isCartMode ? '' : 'none'">
+          <span>{{item.testName}} <small style="color:#888">@ {{item.price.labName}}</small></span>
+          <span>₹{{item.price.effectivePrice | number:'1.0-0'}}</span>
+        </div>
+
         <div class="summary-row" *ngIf="form.collectionType==='HOME'"><span>Home collection</span><span>₹50</span></div>
         <div class="summary-row total"><span>Total</span><span>₹{{total | number:'1.0-0'}}</span></div>
       </div>
 
-      <!-- Payment method -->
       <div class="form-group full" style="margin-top:1rem">
         <label>Payment method</label>
         <div class="radio-cards">
@@ -124,12 +147,10 @@
         </div>
       </div>
 
-      <!-- Payment cancelled / error box with retry -->
       <div class="payment-error-box" *ngIf="paymentError">
         <span class="peb-msg">⚠️ {{paymentError}}</span>
-        <button class="btn-retry" (click)="retryPayment()" *ngIf="confirmed">Retry Payment</button>
+        <button class="btn-retry" (click)="retryPayment()" *ngIf="confirmed.length">Retry Payment</button>
       </div>
-
       <span class="err-msg" *ngIf="errors['submit']" style="margin-top:8px;display:block">{{errors['submit']}}</span>
 
       <div class="step-actions">
@@ -139,47 +160,57 @@
           <span *ngIf="!loading && !paymentLoading">
             {{form.paymentMethod==='CASH' ? 'Confirm Booking' : 'Confirm &amp; Pay ₹' + (total | number:'1.0-0')}}
           </span>
-          <span *ngIf="loading">Saving booking…</span>
+          <span *ngIf="loading">Saving bookings…</span>
           <span *ngIf="!loading && paymentLoading">Opening payment…</span>
         </button>
       </div>
     </div>
 
     <!-- Step 4: Success -->
-    <div *ngIf="step===4 && confirmed" class="step-content success-state">
+    <div *ngIf="step===4 && confirmed.length" class="step-content success-state">
       <div class="success-icon">✓</div>
-      <h2>Booking Confirmed!</h2>
-      <p class="success-msg">
-        Your <strong>{{confirmed.testName}}</strong> at <strong>{{confirmed.labName}}</strong>
-        is booked for {{confirmed.appointmentDate}} at {{confirmed.appointmentSlot}}.
-      </p>
-      <div class="booking-ref">Booking ID: <strong>{{confirmed.bookingRef}}</strong></div>
+      <h2>Booking{{confirmed.length > 1 ? 's' : ''}} Confirmed!</h2>
 
-      <!-- Email notice -->
-      <div class="email-notice" *ngIf="confirmed.email">
-        <span class="email-icon">📧</span>
-        Confirmation email sent to <strong>{{confirmed.email}}</strong>
+      <!-- Single test -->
+      <p class="success-msg" *ngIf="confirmed.length === 1">
+        Your <strong>{{confirmed[0].testName}}</strong> at <strong>{{confirmed[0].labName}}</strong>
+        is booked for {{confirmed[0].appointmentDate}} at {{confirmed[0].appointmentSlot}}.
+      </p>
+      <div class="booking-ref" *ngIf="confirmed.length === 1">Booking ID: <strong>{{confirmed[0].bookingRef}}</strong></div>
+
+      <!-- Multiple tests -->
+      <p class="success-msg" *ngIf="confirmed.length > 1">
+        {{confirmed.length}} tests booked for {{confirmed[0].appointmentDate}} at {{confirmed[0].appointmentSlot}}.
+      </p>
+      <div *ngIf="confirmed.length > 1" style="margin-bottom:1rem">
+        <div *ngFor="let b of confirmed" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:0.9rem">
+          <span><strong>{{b.testName}}</strong> @ {{b.labName}}</span>
+          <span style="color:#888;font-size:0.8rem">{{b.bookingRef}}</span>
+        </div>
       </div>
 
-      <!-- Razorpay payment success badge -->
+      <div class="email-notice" *ngIf="firstConfirmed?.email">
+        <span class="email-icon">📧</span>
+        Confirmation email sent to <strong>{{firstConfirmed!.email}}</strong>
+      </div>
+
       <div class="payment-success-badge" *ngIf="paymentSuccess && form.paymentMethod !== 'CASH'">
         <div class="psb-icon">💳</div>
         <div class="psb-text">
           <div class="psb-title">Payment Successful</div>
           <div class="psb-sub">
-            ₹{{confirmed.totalAmount | number:'1.0-0'}} paid via Razorpay
+            ₹{{total | number:'1.0-0'}} paid via Razorpay
             <span *ngIf="paymentPaymentId"> · ID: {{paymentPaymentId}}</span>
           </div>
           <div class="psb-note">Our team will contact you to confirm your appointment.</div>
         </div>
       </div>
 
-      <!-- Cash notice -->
       <div class="cash-notice" *ngIf="form.paymentMethod === 'CASH'">
         <div class="cash-icon">💵</div>
         <div class="cash-text">
           <div class="cash-title">Pay at Lab</div>
-          <div class="cash-sub">Carry ₹{{confirmed.totalAmount | number:'1.0-0'}} cash and a valid photo ID on your appointment day.</div>
+          <div class="cash-sub">Carry ₹{{total | number:'1.0-0'}} cash and a valid photo ID on your appointment day.</div>
         </div>
       </div>
 

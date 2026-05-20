@@ -2,8 +2,9 @@ import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, PriceDTO, BookingDTO } from '../../services/api.service';
+import { ApiService, PriceDTO, BookingDTO, BookingRequest } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
+import { CartItem } from '../search/search.component';
 
 @Component({
   selector: 'app-booking',
@@ -14,11 +15,13 @@ import { environment } from '../../../environments/environment';
 })
 export class BookingComponent implements OnInit {
   price: PriceDTO | null = null;
+  cartItems: CartItem[] = [];          // always populated (1 or many)
+  get isCartMode(): boolean { return this.cartItems.length > 1; }
+
   step = 1;
   loading = false;
-  confirmed: BookingDTO | null = null;
+  confirmed: BookingDTO[] = [];        // array — works for 1 or many
 
-  // Razorpay payment state
   paymentLoading = false;
   paymentSuccess = false;
   paymentError = '';
@@ -34,18 +37,22 @@ export class BookingComponent implements OnInit {
   dates: { label: string; value: string }[] = [];
   slots = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
 
-  // Capture router state in constructor — getCurrentNavigation() is only valid here,
-  // not in ngOnInit (by then the navigation has already completed and returns null).
   private navState: any;
 
   constructor(private api: ApiService, private router: Router, private zone: NgZone) {
-    this.navState = this.router.getCurrentNavigation()?.extras?.state
-                   ?? window.history.state;
+    // Must read here — getCurrentNavigation() is null by the time ngOnInit runs
+    this.navState = this.router.getCurrentNavigation()?.extras?.state ?? window.history.state;
   }
 
   ngOnInit() {
     if (this.navState?.price) {
-      this.price = this.navState.price;
+      // Single "Book Now" — wrap in array for uniform handling
+      this.price     = this.navState.price;
+      this.cartItems = [{ price: this.navState.price, testName: this.navState.price.testName }];
+    } else if (this.navState?.cartItems?.length) {
+      // Cart with 1 or more items
+      this.cartItems = this.navState.cartItems;
+      this.price     = this.cartItems[0].price;
     } else {
       this.router.navigate(['/search']);
       return;
@@ -54,7 +61,7 @@ export class BookingComponent implements OnInit {
   }
 
   buildDates() {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     for (let i = 1; i <= 8; i++) {
       const d = new Date(); d.setDate(d.getDate() + i);
@@ -82,35 +89,41 @@ export class BookingComponent implements OnInit {
   back() { this.step = Math.max(1, this.step - 1); }
 
   get collectionFee(): number { return this.form.collectionType === 'HOME' ? 50 : 0; }
-  get total(): number { return (this.price?.effectivePrice || 0) + this.collectionFee; }
+  get total(): number { return this.cartItems.reduce((s, c) => s + c.price.effectivePrice, 0) + this.collectionFee; }
+  get firstConfirmed(): BookingDTO | null { return this.confirmed[0] ?? null; }
 
   confirm() {
-    if (!this.price) return;
     this.loading = true;
-    this.errors = {};
+    this.errors  = {};
     this.paymentError = '';
-    const req = {
-      patientName: this.form.patientName, patientAge: Number(this.form.patientAge),
-      phone: this.form.phone, email: this.form.email,
-      labId: this.price.labId, testId: this.price.testId,
-      collectionType: this.form.collectionType, collectionAddress: this.form.collectionAddress,
-      appointmentDate: this.form.appointmentDate, appointmentSlot: this.form.appointmentSlot,
-      paymentMethod: this.form.paymentMethod
-    };
-    this.api.createBooking(req).subscribe({
-      next: booking => {
-        this.confirmed = booking;
-        this.loading = false;
-        if (this.form.paymentMethod === 'CASH') {
-          // Cash: no online payment, go straight to success screen
-          this.paymentSuccess = true;
-          this.step = 4;
-        } else {
-          // UPI / Card: open Razorpay checkout
-          this.openRazorpay(booking);
-        }
-      },
-      error: (e) => { this.errors['submit'] = e?.error?.message || 'Booking failed. Please try again.'; this.loading = false; }
+    // Build one request per cart item and fire them sequentially
+    const requests: BookingRequest[] = this.cartItems.map(item => ({
+      patientName:       this.form.patientName,
+      patientAge:        Number(this.form.patientAge),
+      phone:             this.form.phone,
+      email:             this.form.email,
+      labId:             item.price.labId,
+      testId:            item.price.testId,
+      collectionType:    this.form.collectionType,
+      collectionAddress: this.form.collectionAddress,
+      appointmentDate:   this.form.appointmentDate,
+      appointmentSlot:   this.form.appointmentSlot,
+      paymentMethod:     this.form.paymentMethod
+    }));
+    this.bookSequentially(requests, 0, []);
+  }
+
+  private bookSequentially(requests: BookingRequest[], i: number, done: BookingDTO[]) {
+    if (i >= requests.length) {
+      this.confirmed = done;
+      this.loading   = false;
+      if (this.form.paymentMethod === 'CASH') { this.paymentSuccess = true; this.step = 4; }
+      else { this.openRazorpay(done); }
+      return;
+    }
+    this.api.createBooking(requests[i]).subscribe({
+      next:  b   => this.bookSequentially(requests, i + 1, [...done, b]),
+      error: err => { this.errors['submit'] = err?.error?.message || 'Booking failed. Please try again.'; this.loading = false; }
     });
   }
 
@@ -125,11 +138,10 @@ export class BookingComponent implements OnInit {
     });
   }
 
-  private async openRazorpay(booking: BookingDTO) {
+  private async openRazorpay(bookings: BookingDTO[]) {
     this.paymentLoading = true;
-    this.paymentError = '';
+    this.paymentError   = '';
     try {
-      // 1. Create Razorpay order on our backend
       const orderRes = await fetch(`${environment.apiUrl}/razorpay/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,62 +149,60 @@ export class BookingComponent implements OnInit {
       });
       if (!orderRes.ok) throw new Error('Could not create payment order');
       const order = await orderRes.json();
-
       await this.loadRazorpayScript();
 
-      // 2. Open Razorpay checkout modal
+      const first     = bookings[0];
+      const testNames = bookings.map(b => b.testName).join(', ');
+
       const options: any = {
-        key: order['key'],
-        amount: order['amount'],
-        currency: 'INR',
-        name: 'LabChain',
-        description: `${booking.testName} at ${booking.labName}`,
-        order_id: order['id'],
+        key:         order['key'],
+        amount:      order['amount'],
+        currency:    'INR',
+        name:        'LabChain',
+        description: bookings.length === 1 ? `${first.testName} at ${first.labName}` : `${bookings.length} tests — ${testNames}`,
+        order_id:    order['id'],
         prefill: { name: this.form.patientName.trim(), contact: this.form.phone.trim(), email: this.form.email.trim() || undefined },
-        notes: { booking_ref: booking.bookingRef, test: booking.testName, lab: booking.labName },
+        notes: { booking_refs: bookings.map(b => b.bookingRef).join(', '), tests: testNames },
         theme: { color: '#1D9E75' },
         handler: (response: any) => {
           this.zone.run(() => {
             this.paymentPaymentId = response.razorpay_payment_id;
-            this.verifyAndFinalize(booking, response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
+            this.verifyAndFinalize(bookings, response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
           });
         },
         modal: {
           ondismiss: () => {
-            this.zone.run(() => {
-              this.paymentLoading = false;
-              this.paymentError = 'Payment was cancelled. Click "Retry Payment" to try again.';
-            });
+            this.zone.run(() => { this.paymentLoading = false; this.paymentError = 'Payment was cancelled. Click "Retry Payment" to try again.'; });
           }
         }
       };
       new (window as any).Razorpay(options).open();
-    } catch (err: any) {
+    } catch {
       this.zone.run(() => { this.paymentLoading = false; this.paymentError = 'Could not open payment gateway. Please try again.'; });
     }
   }
 
-  private async verifyAndFinalize(booking: BookingDTO, orderId: string, paymentId: string, signature: string) {
+  private async verifyAndFinalize(bookings: BookingDTO[], orderId: string, paymentId: string, signature: string) {
     try {
-      const res = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
+      const first = bookings[0];
+      const res   = await fetch(`${environment.apiUrl}/razorpay/verify-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          razorpay_order_id: orderId,
+          razorpay_order_id:   orderId,
           razorpay_payment_id: paymentId,
-          razorpay_signature: signature,
-          userName: booking.patientName,
-          userPhone: booking.phone,
-          amount: Math.round(booking.totalAmount || this.total),
-          tests:      [booking.testName],
-          userEmail:  booking.email,        // patient's email → TO field
-          // Booking context for rich team email
-          bookingRef: booking.bookingRef,
-          labName: booking.labName,
-          appointmentDate: booking.appointmentDate,
-          appointmentSlot: booking.appointmentSlot,
-          collectionType: booking.collectionType,
-          collectionAddress: booking.collectionAddress
+          razorpay_signature:  signature,
+          userName:            this.form.patientName,
+          userPhone:           this.form.phone,
+          amount:              Math.round(this.total),
+          tests:               bookings.map(b => b.testName),
+          userEmail:           first.email,
+          bookingRef:          bookings.map(b => b.bookingRef).join(', '),
+          labName:             bookings.map(b => b.labName).join(', '),
+          appointmentDate:     first.appointmentDate,
+          appointmentSlot:     first.appointmentSlot,
+          collectionType:      first.collectionType,
+          collectionAddress:   first.collectionAddress
         })
       });
       const result = await res.json();
@@ -200,18 +210,18 @@ export class BookingComponent implements OnInit {
       this.paymentSuccess = true;
       this.paymentLoading = false;
       this.step = 4;
-    } catch (err: any) {
+    } catch {
       this.paymentLoading = false;
       this.paymentError = 'Payment received but verification failed. Contact support with Payment ID: ' + paymentId;
     }
   }
 
   retryPayment() {
-    if (!this.confirmed) return;
+    if (!this.confirmed.length) return;
     this.paymentError = '';
     this.openRazorpay(this.confirmed);
   }
 
-  goSearch() { this.router.navigate(['/search']); }
+  goSearch()     { this.router.navigate(['/search']); }
   goMyBookings() { this.router.navigate(['/my-bookings']); }
 }
