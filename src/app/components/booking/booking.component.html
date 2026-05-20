@@ -16,7 +16,7 @@
         <div class="test-banner-name">{{cartItems.length}} Tests</div>
         <div class="test-banner-meta">
           <span *ngFor="let item of cartItems; let last = last">
-            {{item.testName}} @ {{item.price.labName}}<span *ngIf="!last"> &nbsp;·&nbsp; </span>
+            {{item.testName}} &#64; {{item.price.labName}}<span *ngIf="!last"> &nbsp;·&nbsp; </span>
           </span>
         </div>
       </div>
@@ -125,7 +125,7 @@
 
         <!-- Per-test rows for cart -->
         <div class="summary-row" *ngFor="let item of cartItems" [style.display]="isCartMode ? '' : 'none'">
-          <span>{{item.testName}} <small style="color:#888">@ {{item.price.labName}}</small></span>
+          <span>{{item.testName}} <small style="color:#888">&#64; {{item.price.labName}}</small></span>
           <span>₹{{item.price.effectivePrice | number:'1.0-0'}}</span>
         </div>
 
@@ -184,7 +184,7 @@
       </p>
       <div *ngIf="confirmed.length > 1" style="margin-bottom:1rem">
         <div *ngFor="let b of confirmed" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:0.9rem">
-          <span><strong>{{b.testName}}</strong> @ {{b.labName}}</span>
+          <span><strong>{{b.testName}}</strong> &#64; {{b.labName}}</span>
           <span style="color:#888;font-size:0.8rem">{{b.bookingRef}}</span>
         </div>
       </div>
