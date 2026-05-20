@@ -1,4 +1,4 @@
-/* ─── LOGIN PAGE ─── Full-screen, perfectly centred on every screen */
+/* ─── LOGIN PAGE ─── */
 
 .login-page {
   min-height: 100dvh;
@@ -26,6 +26,9 @@
   padding: 32px 28px 26px;
   text-align: center;
   color: #fff;
+
+  h1 { margin: 0 0 4px; font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+  p  { margin: 0; font-size: 13px; opacity: 0.82; line-height: 1.4; }
 }
 
 .brand-icon {
@@ -39,20 +42,6 @@
   margin: 0 auto 12px;
 }
 
-.login-header h1 {
-  margin: 0 0 4px;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-}
-
-.login-header p {
-  margin: 0;
-  font-size: 13px;
-  opacity: 0.82;
-  line-height: 1.4;
-}
-
 /* ── Tabs ── */
 .tab-row {
   display: flex;
@@ -61,7 +50,6 @@
 
 .tab-btn {
   flex: 1;
-  padding: 0;
   height: 52px;
   border: none;
   background: none;
@@ -72,18 +60,10 @@
   transition: all 0.18s;
   border-bottom: 2.5px solid transparent;
   -webkit-tap-highlight-color: transparent;
-  /* Good touch target */
   min-height: 52px;
+  &.active { color: #1D9E75; border-bottom-color: #1D9E75; background: #f8fffc; font-weight: 600; }
+  &:hover:not(.active) { color: #555; background: #fafafa; }
 }
-
-.tab-btn.active {
-  color: #1D9E75;
-  border-bottom-color: #1D9E75;
-  background: #f8fffc;
-  font-weight: 600;
-}
-
-.tab-btn:hover:not(.active) { color: #555; background: #fafafa; }
 
 /* ── Alerts ── */
 .alert {
@@ -93,7 +73,6 @@
   font-size: 13px;
   line-height: 1.4;
 }
-
 .alert-error   { background: #fff1f1; color: #c0392b; border: 1px solid #fbd5d5; }
 .alert-success { background: #f0faf4; color: #1a7a45; border: 1px solid #b7e6c9; }
 
@@ -109,37 +88,25 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-}
-
-label {
-  font-size: 13px;
-  color: #444;
-  font-weight: 600;
-  letter-spacing: 0.1px;
+  label { font-size: 13px; color: #444; font-weight: 600; letter-spacing: 0.1px; }
 }
 
 input {
   border: 1.5px solid #ddd;
   border-radius: 10px;
   padding: 13px 14px;
-  font-size: 16px !important; /* Prevent iOS zoom */
+  font-size: 16px !important;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   width: 100%;
   background: #fafafa;
   color: #111;
+  &:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.12); background: #fff; }
+  &::placeholder { color: #bbb; font-size: 15px; }
 }
 
-input:focus {
-  border-color: #1D9E75;
-  box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
-  background: #fff;
-}
-
-input::placeholder { color: #bbb; font-size: 15px; }
-
-/* ── Buttons ── */
-.btn-submit {
+/* ── Submit button ── */
+.submit-btn {
   background: #1D9E75;
   color: white;
   border: none;
@@ -152,13 +119,40 @@ input::placeholder { color: #bbb; font-size: 15px; }
   width: 100%;
   min-height: 52px;
   -webkit-tap-highlight-color: transparent;
-  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  &:hover    { background: #0F6E56; }
+  &:active   { transform: scale(0.98); }
+  &:disabled { opacity: 0.58; cursor: not-allowed; transform: none; }
 }
 
-.btn-submit:hover  { background: #0F6E56; }
-.btn-submit:active { transform: scale(0.98); }
-.btn-submit:disabled { opacity: 0.58; cursor: not-allowed; transform: none; }
+/* ── Spinner ── */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
 
+.spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #888;
+  padding: 12px 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Forgot link ── */
 .forgot-link {
   text-align: right;
   font-size: 13px;
@@ -172,9 +166,10 @@ input::placeholder { color: #bbb; font-size: 15px; }
   min-height: 32px;
   display: inline-flex;
   align-items: center;
+  &:hover { text-decoration: underline; }
 }
 
-.forgot-link:hover { text-decoration: underline; }
+.forgot-link-row { display: flex; justify-content: flex-end; margin-top: -6px; }
 
 /* ── Forgot password header ── */
 .forgot-back-row {
@@ -196,28 +191,94 @@ input::placeholder { color: #bbb; font-size: 15px; }
   border-radius: 6px;
   -webkit-tap-highlight-color: transparent;
   min-height: 40px;
+  &:hover { background: #f0faf4; }
 }
 
-.forgot-back-btn:hover { background: #f0faf4; }
+.back-link {
+  background: none;
+  border: none;
+  color: #1D9E75;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 0;
+  -webkit-tap-highlight-color: transparent;
+  &:hover { text-decoration: underline; }
+}
 
-.forgot-title {
-  font-size: 15px;
-  font-weight: 600;
+.forgot-title { font-size: 15px; font-weight: 600; color: #333; }
+.forgot-desc  { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 4px; }
+
+/* ── Hint box ── */
+.hint-box {
+  background: #f0faf4;
+  border: 1px solid #b7e6c9;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+
+.hint-title { font-size: 13px; font-weight: 700; color: #1a7a45; margin-bottom: 8px; }
+
+.hint-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
   color: #333;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  &:last-child { border-bottom: none; }
 }
 
-/* ── Mobile: tighten padding ── */
+/* ── OTP notice ── */
+.otp-notice {
+  background: #e8f3fd;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #1e40af;
+  margin-bottom: 4px;
+}
+
+/* ── Resend OTP ── */
+.resend-otp-btn {
+  background: none;
+  border: none;
+  color: #1D9E75;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 0;
+  font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+  &:hover { text-decoration: underline; }
+  &:disabled { color: #aaa; cursor: not-allowed; text-decoration: none; }
+}
+
+/* ── Role badges ── */
+.role-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  &.user  { background: #f0f0f0; color: #555; }
+  &.admin { background: #ede9fe; color: #5b21b6; }
+}
+
+.user  { /* inherits from .role-badge.user  */ }
+.admin { /* inherits from .role-badge.admin */ }
+
+/* ── Mobile ── */
 @media (max-width: 480px) {
   .login-page { padding: 12px; align-items: flex-start; padding-top: 24px; }
   .login-card { border-radius: 16px; max-width: 100%; }
-  .login-header { padding: 24px 20px 20px; }
-  .login-header h1 { font-size: 21px; }
+  .login-header { padding: 24px 20px 20px; h1 { font-size: 21px; } }
   .form-body { padding: 16px 16px 20px; gap: 14px; }
   .alert { margin: 10px 16px 0; }
   .forgot-back-row { padding: 12px 16px; }
 }
 
-/* ── Very small phones (≤360px) ── */
 @media (max-width: 360px) {
   .login-header { padding: 20px 16px 18px; }
   .brand-icon { width: 48px; height: 48px; }
