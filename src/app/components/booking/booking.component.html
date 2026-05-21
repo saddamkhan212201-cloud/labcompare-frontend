@@ -81,6 +81,7 @@
         <span class="err-msg" *ngIf="errors['address']">{{errors['address']}}</span>
       </div>
       <div class="step-actions">
+        <button class="btn-secondary" (click)="addMoreTests()">← Add more tests</button>
         <button class="btn-primary" (click)="next()">Next: Pick a slot →</button>
       </div>
     </div>

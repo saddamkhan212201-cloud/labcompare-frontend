@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService, PriceDTO, BookingDTO, BookingRequest } from '../../services/api.service';
+import { CartService } from '../../services/cart.service';
 import { environment } from '../../../environments/environment';
 import { CartItem } from '../search/search.component';
 
@@ -15,12 +16,12 @@ import { CartItem } from '../search/search.component';
 })
 export class BookingComponent implements OnInit {
   price: PriceDTO | null = null;
-  cartItems: CartItem[] = [];          // always populated (1 or many)
+  cartItems: CartItem[] = [];
   get isCartMode(): boolean { return this.cartItems.length > 1; }
 
   step = 1;
   loading = false;
-  confirmed: BookingDTO[] = [];        // array — works for 1 or many
+  confirmed: BookingDTO[] = [];
 
   paymentLoading = false;
   paymentSuccess = false;
@@ -39,19 +40,24 @@ export class BookingComponent implements OnInit {
 
   private navState: any;
 
-  constructor(private api: ApiService, private router: Router, private zone: NgZone) {
-    // Must read here — getCurrentNavigation() is null by the time ngOnInit runs
+  constructor(
+    private api: ApiService,
+    private router: Router,
+    private zone: NgZone,
+    private cartSvc: CartService
+  ) {
     this.navState = this.router.getCurrentNavigation()?.extras?.state ?? window.history.state;
   }
 
   ngOnInit() {
     if (this.navState?.price) {
-      // Single "Book Now" — wrap in array for uniform handling
       this.price     = this.navState.price;
       this.cartItems = [{ price: this.navState.price, testName: this.navState.price.testName }];
     } else if (this.navState?.cartItems?.length) {
-      // Cart with 1 or more items
       this.cartItems = this.navState.cartItems;
+      this.price     = this.cartItems[0].price;
+    } else if (this.cartSvc.count > 0) {
+      this.cartItems = this.cartSvc.items;
       this.price     = this.cartItems[0].price;
     } else {
       this.router.navigate(['/search']);
@@ -88,6 +94,8 @@ export class BookingComponent implements OnInit {
   next() { if (this.step === 1 && this.validateStep1()) this.step = 2; else if (this.step === 2 && this.validateStep2()) this.step = 3; }
   back() { this.step = Math.max(1, this.step - 1); }
 
+  addMoreTests() { this.router.navigate(['/search']); }
+
   get collectionFee(): number { return this.form.collectionType === 'HOME' ? 50 : 0; }
   get total(): number { return this.cartItems.reduce((s, c) => s + c.price.effectivePrice, 0) + this.collectionFee; }
   get firstConfirmed(): BookingDTO | null { return this.confirmed[0] ?? null; }
@@ -96,7 +104,6 @@ export class BookingComponent implements OnInit {
     this.loading = true;
     this.errors  = {};
     this.paymentError = '';
-    // Build one request per cart item and fire them sequentially
     const requests: BookingRequest[] = this.cartItems.map(item => ({
       patientName:       this.form.patientName,
       patientAge:        Number(this.form.patientAge),
@@ -117,14 +124,49 @@ export class BookingComponent implements OnInit {
     if (i >= requests.length) {
       this.confirmed = done;
       this.loading   = false;
-      if (this.form.paymentMethod === 'CASH') { this.paymentSuccess = true; this.step = 4; }
-      else { this.openRazorpay(done); }
+      if (this.form.paymentMethod === 'CASH') {
+        // ALL bookings are saved — send ONE combined email for everything
+        this.sendCashEmail(done);
+        this.paymentSuccess = true;
+        this.step = 4;
+        this.cartSvc.clearAfterBooking();
+      } else {
+        this.openRazorpay(done);
+      }
       return;
     }
     this.api.createBooking(requests[i]).subscribe({
       next:  b   => this.bookSequentially(requests, i + 1, [...done, b]),
       error: err => { this.errors['submit'] = err?.error?.message || 'Booking failed. Please try again.'; this.loading = false; }
     });
+  }
+
+  /**
+   * ONE email for the entire cart — called only after all bookings are saved.
+   * Hits /api/bookings/cash-notify (a dedicated endpoint) so the backend
+   * never touches HMAC verification for cash flows.
+   */
+  private async sendCashEmail(bookings: BookingDTO[]) {
+    try {
+      const first = bookings[0];
+      await fetch(`${environment.apiUrl}/bookings/cash-notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userName:         this.form.patientName,
+          userPhone:        this.form.phone,
+          userEmail:        this.form.email,
+          amount:           Math.round(this.total),
+          tests:            bookings.map(b => b.testName),
+          bookingRefs:      bookings.map(b => b.bookingRef).join(', '),
+          labNames:         bookings.map(b => b.labName).join(', '),
+          appointmentDate:  first.appointmentDate,
+          appointmentSlot:  first.appointmentSlot,
+          collectionType:   first.collectionType,
+          collectionAddress: first.collectionAddress
+        })
+      });
+    } catch { /* email failure never blocks the UI */ }
   }
 
   private loadRazorpayScript(): Promise<void> {
@@ -210,6 +252,7 @@ export class BookingComponent implements OnInit {
       this.paymentSuccess = true;
       this.paymentLoading = false;
       this.step = 4;
+      this.cartSvc.clearAfterBooking();
     } catch {
       this.paymentLoading = false;
       this.paymentError = 'Payment received but verification failed. Contact support with Payment ID: ' + paymentId;

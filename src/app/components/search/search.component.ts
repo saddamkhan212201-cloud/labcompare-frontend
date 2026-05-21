@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService, TestItem, PriceDTO } from '../../services/api.service';
+import { CartService } from '../../services/cart.service';
 import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
 import { PrescriptionComponent } from '../prescription/prescription.component';
 
@@ -19,7 +20,6 @@ export interface CartItem {
   styleUrl: './search.component.scss'
 })
 export class SearchComponent implements OnInit {
-  // Tab control
   activeTab: 'search' | 'prescription' = 'search';
 
   tests: TestItem[] = [];
@@ -34,11 +34,9 @@ export class SearchComponent implements OnInit {
   loading = false;
   private search$ = new Subject<{q:string,cat:string}>();
 
-  // ─── Cart ─────────────────────────────────────────────────────────────────
-  cart: CartItem[] = [];
   showCart = false;
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, public cartSvc: CartService) {}
 
   ngOnInit() {
     this.loadTests();
@@ -69,7 +67,6 @@ export class SearchComponent implements OnInit {
   }
 
   onSearch() { this.search$.next({q: this.searchQuery, cat: this.selectedCategory}); }
-
   setCategory(cat: string) { this.selectedCategory = cat; this.onSearch(); }
 
   selectTest(test: TestItem) {
@@ -107,56 +104,35 @@ export class SearchComponent implements OnInit {
     return name.split(' ').map(w => w[0]).slice(0,2).join('');
   }
 
-  // Existing single-test direct book (unchanged)
   bookNow(price: PriceDTO) {
     this.router.navigate(['/book'], { state: { price } });
   }
 
-  // ─── CART METHODS ─────────────────────────────────────────────────────────
+  // ─── Cart (delegates to CartService → localStorage) ───────────────────────
 
-  isInCart(priceId: number): boolean {
-    return this.cart.some(c => c.price.id === priceId);
-  }
+  get cart(): CartItem[] { return this.cartSvc.items; }
+  get cartTotal(): number { return this.cartSvc.total; }
+  get cartCount(): number { return this.cartSvc.count; }
 
-  testHasCartItem(testId: number): boolean {
-    return this.cart.some(c => c.price.testId === testId);
-  }
+  isInCart(priceId: number): boolean { return this.cartSvc.isInCart(priceId); }
+  testHasCartItem(testId: number): boolean { return this.cartSvc.testHasCartItem(testId); }
 
   addToCart(price: PriceDTO) {
-    if (this.isInCart(price.id)) return;
-    // One selection per test — if same test already in cart from different lab, replace
-    const existingIdx = this.cart.findIndex(c => c.price.testId === price.testId);
-    if (existingIdx > -1) {
-      this.cart[existingIdx] = { price, testName: this.selectedTestName };
-    } else {
-      this.cart.push({ price, testName: this.selectedTestName });
-    }
+    this.cartSvc.add({ price, testName: this.selectedTestName });
   }
 
-  removeFromCart(priceId: number) {
-    this.cart = this.cart.filter(c => c.price.id !== priceId);
-  }
-
-  clearCart() { this.cart = []; }
-
-  get cartTotal(): number {
-    return this.cart.reduce((sum, c) => sum + c.price.effectivePrice, 0);
-  }
-
-  get cartCount(): number { return this.cart.length; }
-
+  removeFromCart(priceId: number) { this.cartSvc.remove(priceId); }
+  clearCart() { this.cartSvc.clearAfterBooking(); }
   toggleCart() { this.showCart = !this.showCart; }
 
-  // Proceed to booking with all cart items
   proceedToBook() {
-    if (this.cart.length === 0) return;
-    if (this.cart.length === 1) {
-      // Single item — use existing booking flow unchanged
-      this.router.navigate(['/book'], { state: { price: this.cart[0].price } });
+    if (this.cartSvc.count === 0) return;
+    if (this.cartSvc.count === 1) {
+      this.router.navigate(['/book'], { state: { price: this.cartSvc.items[0].price } });
     } else {
-      // Multiple items — pass full cart to booking component
-      this.router.navigate(['/book'], { state: { cartItems: this.cart } });
+      this.router.navigate(['/book'], { state: { cartItems: this.cartSvc.items } });
     }
     this.showCart = false;
+    // Cart is NOT cleared here — only cleared after successful booking (step 4)
   }
 }
