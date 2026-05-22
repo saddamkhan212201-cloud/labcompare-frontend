@@ -57,6 +57,7 @@ export class AuthService {
   }
 
   logout() {
+    this.cart.clearForLogout();
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
   }

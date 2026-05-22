@@ -9,7 +9,10 @@ export class CartService {
   private _items: CartItem[] = [];
 
   constructor() {
-    this._load();
+    // Do NOT load here — at construction time sessionStorage may not have
+    // lc_user yet, causing _key to fall back to 'guest' and every user
+    // to share the same cart. Load only via reloadForUser() after login.
+    this._items = [];
   }
 
   // ── Key is based on username stored in sessionStorage directly ──────────
@@ -60,6 +63,12 @@ export class CartService {
   clearAfterBooking(): void {
     this._items = [];
     this._save();
+  }
+
+  // Called on logout — wipes memory so next user starts clean.
+  // Does NOT touch localStorage so the user's cart is restored on next login.
+  clearForLogout(): void {
+    this._items = [];
   }
 
   // Called after login so the correct user's cart loads from localStorage
