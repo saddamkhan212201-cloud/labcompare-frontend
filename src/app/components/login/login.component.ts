@@ -22,6 +22,7 @@ export class LoginComponent {
   username        = '';
   password        = '';
   confirmPassword = '';
+  registerPhone   = '';   // required on register — linked to account permanently
   error           = '';
   success         = '';
   loading         = false;
@@ -62,8 +63,12 @@ export class LoginComponent {
         this.error = 'Passwords do not match.';
         return;
       }
+      if (!this.registerPhone.match(/^[6-9]\d{9}$/)) {
+        this.error = 'Enter a valid 10-digit mobile number.';
+        return;
+      }
       this.loading = true;
-      this.auth.register(this.username, this.password).subscribe({
+      this.auth.register(this.username, this.password, this.registerPhone).subscribe({
         next: () => {
           this.success = 'Account created! You can now log in.';
           this.mode = 'login';

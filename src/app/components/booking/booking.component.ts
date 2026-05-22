@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService, PriceDTO, BookingDTO, BookingRequest } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
-import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { CartItem } from '../search/search.component';
 
@@ -42,11 +41,10 @@ export class BookingComponent implements OnInit {
   private navState: any;
 
   constructor(
-    private api:    ApiService,
+    private api: ApiService,
     private router: Router,
-    private zone:   NgZone,
-    private cartSvc: CartService,
-    private auth:   AuthService
+    private zone: NgZone,
+    private cartSvc: CartService
   ) {
     this.navState = this.router.getCurrentNavigation()?.extras?.state ?? window.history.state;
   }
@@ -106,22 +104,18 @@ export class BookingComponent implements OnInit {
     this.loading = true;
     this.errors  = {};
     this.paymentError = '';
-
-    const loggedInUsername = this.auth.getUsername() ?? '';
-
     const requests: BookingRequest[] = this.cartItems.map(item => ({
-      patientName:        this.form.patientName,
-      patientAge:         Number(this.form.patientAge),
-      phone:              this.form.phone,
-      email:              this.form.email,
-      labId:              item.price.labId,
-      testId:             item.price.testId,
-      collectionType:     this.form.collectionType,
-      collectionAddress:  this.form.collectionAddress,
-      appointmentDate:    this.form.appointmentDate,
-      appointmentSlot:    this.form.appointmentSlot,
-      paymentMethod:      this.form.paymentMethod,
-      bookedByUsername:   loggedInUsername   // ← links booking to logged-in user
+      patientName:       this.form.patientName,
+      patientAge:        Number(this.form.patientAge),
+      phone:             this.form.phone,
+      email:             this.form.email,
+      labId:             item.price.labId,
+      testId:            item.price.testId,
+      collectionType:    this.form.collectionType,
+      collectionAddress: this.form.collectionAddress,
+      appointmentDate:   this.form.appointmentDate,
+      appointmentSlot:   this.form.appointmentSlot,
+      paymentMethod:     this.form.paymentMethod
     }));
     this.bookSequentially(requests, 0, []);
   }
@@ -131,6 +125,7 @@ export class BookingComponent implements OnInit {
       this.confirmed = done;
       this.loading   = false;
       if (this.form.paymentMethod === 'CASH') {
+        // ALL bookings are saved — send ONE combined email for everything
         this.sendCashEmail(done);
         this.paymentSuccess = true;
         this.step = 4;
@@ -146,6 +141,11 @@ export class BookingComponent implements OnInit {
     });
   }
 
+  /**
+   * ONE email for the entire cart — called only after all bookings are saved.
+   * Hits /api/bookings/cash-notify (a dedicated endpoint) so the backend
+   * never touches HMAC verification for cash flows.
+   */
   private async sendCashEmail(bookings: BookingDTO[]) {
     try {
       const first = bookings[0];
@@ -153,20 +153,20 @@ export class BookingComponent implements OnInit {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userName:          this.form.patientName,
-          userPhone:         this.form.phone,
-          userEmail:         this.form.email,
-          amount:            Math.round(this.total),
-          tests:             bookings.map(b => b.testName),
-          bookingRefs:       bookings.map(b => b.bookingRef).join(', '),
-          labNames:          bookings.map(b => b.labName).join(', '),
-          appointmentDate:   first.appointmentDate,
-          appointmentSlot:   first.appointmentSlot,
-          collectionType:    first.collectionType,
+          userName:         this.form.patientName,
+          userPhone:        this.form.phone,
+          userEmail:        this.form.email,
+          amount:           Math.round(this.total),
+          tests:            bookings.map(b => b.testName),
+          bookingRefs:      bookings.map(b => b.bookingRef).join(', '),
+          labNames:         bookings.map(b => b.labName).join(', '),
+          appointmentDate:  first.appointmentDate,
+          appointmentSlot:  first.appointmentSlot,
+          collectionType:   first.collectionType,
           collectionAddress: first.collectionAddress
         })
       });
-    } catch { }
+    } catch { /* email failure never blocks the UI */ }
   }
 
   private loadRazorpayScript(): Promise<void> {

@@ -50,6 +50,8 @@ export class ApiService {
   createBooking(b: BookingRequest): Observable<BookingDTO>   { return this.u(this.http.post<ApiResp<BookingDTO>>(`${this.base}/bookings`, b)); }
   getBookingByRef(ref: string): Observable<BookingDTO>       { return this.u(this.http.get<ApiResp<BookingDTO>>(`${this.base}/bookings/${ref}`)); }
   getBookingsByPhone(phone: string): Observable<BookingDTO[]>{ return this.u(this.http.get<ApiResp<BookingDTO[]>>(`${this.base}/bookings`, { params: new HttpParams().set('phone', phone) })); }
+  /** For regular USER role — no phone param, backend reads phone from JWT */
+  getMyBookings(): Observable<BookingDTO[]>                  { return this.u(this.http.get<ApiResp<BookingDTO[]>>(`${this.base}/bookings`)); }
   getAllBookings(): Observable<BookingDTO[]>                  { return this.u(this.http.get<ApiResp<BookingDTO[]>>(`${this.base}/bookings`)); }
   cancelBooking(ref: string): Observable<BookingDTO>         { return this.u(this.http.patch<ApiResp<BookingDTO>>(`${this.base}/bookings/${ref}/cancel`, {})); }
 }

@@ -1,31 +1,68 @@
 <div class="page-container">
   <h1>My Bookings</h1>
-  <div class="search-box">
-    <input [(ngModel)]="phone" placeholder="Enter 10-digit mobile number" (keyup.enter)="search()" />
-    <button class="btn-primary" (click)="search()" [disabled]="loading">{{loading ? 'Searching...' : 'Search'}}</button>
+
+  <!-- ── ADMIN: phone search bar ─────────────────────────────────────── -->
+  <ng-container *ngIf="auth.isAdminOrSuper()">
+    <div class="search-box">
+      <input [(ngModel)]="adminPhone"
+             placeholder="Search by phone number"
+             (keyup.enter)="searchByPhone()" />
+      <button class="btn-primary" (click)="searchByPhone()" [disabled]="loading">
+        {{ loading ? 'Searching...' : 'Search' }}
+      </button>
+      <button class="btn-secondary" (click)="loadAll()" [disabled]="loading">
+        Show All
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- ── Regular USER: auto-loading indicator ────────────────────────── -->
+  <ng-container *ngIf="!auth.isAdminOrSuper()">
+    <p class="user-hint" *ngIf="!searched && loading">Loading your bookings...</p>
+  </ng-container>
+
+  <span class="err-msg" *ngIf="error">{{ error }}</span>
+
+  <!-- ── Loading spinner ─────────────────────────────────────────────── -->
+  <div class="loading-row" *ngIf="loading">Fetching bookings...</div>
+
+  <!-- ── Empty state ─────────────────────────────────────────────────── -->
+  <div *ngIf="searched && !loading && bookings.length === 0" class="empty-state">
+    <ng-container *ngIf="auth.isAdminOrSuper()">No bookings found for this number.</ng-container>
+    <ng-container *ngIf="!auth.isAdminOrSuper()">You have no bookings yet. <a routerLink="/search">Book a test</a></ng-container>
   </div>
-  <span class="err-msg" *ngIf="error">{{error}}</span>
 
-  <div *ngIf="searched && bookings.length===0" class="empty-state">No bookings found for this number.</div>
-
+  <!-- ── Booking cards ───────────────────────────────────────────────── -->
   <div *ngFor="let b of bookings" class="booking-card">
     <div class="booking-header">
       <div>
-        <div class="booking-ref">{{b.bookingRef}}</div>
-        <div class="booking-date">Booked on {{b.createdAt | date:'dd MMM yyyy, h:mm a'}}</div>
+        <div class="booking-ref">{{ b.bookingRef }}</div>
+        <div class="booking-date">Booked on {{ b.createdAt | date:'dd MMM yyyy, h:mm a' }}</div>
       </div>
-      <span class="status-badge" [ngClass]="statusClass(b.status)">{{b.status}}</span>
+      <span class="status-badge" [ngClass]="statusClass(b.status)">{{ b.status }}</span>
     </div>
     <div class="booking-body">
-      <div class="info-row"><span>Test</span><span>{{b.testName}}</span></div>
-      <div class="info-row"><span>Lab</span><span>{{b.labName}}</span></div>
-      <div class="info-row"><span>Patient</span><span>{{b.patientName}} <span *ngIf="b.patientAge">(Age {{b.patientAge}})</span></span></div>
-      <div class="info-row"><span>Appointment</span><span>{{b.appointmentDate | date:'dd MMM yyyy'}} at {{b.appointmentSlot}}</span></div>
-      <div class="info-row"><span>Collection</span><span>{{b.collectionType==='HOME' ? 'Home - '+b.collectionAddress : 'Visit Lab'}}</span></div>
-      <div class="info-row"><span>Payment</span><span>{{b.paymentMethod}}</span></div>
-      <div class="info-row total"><span>Total Amount</span><span>₹{{b.totalAmount | number:'1.0-0'}}</span></div>
+      <div class="info-row"><span>Test</span><span>{{ b.testName }}</span></div>
+      <div class="info-row"><span>Lab</span><span>{{ b.labName }}</span></div>
+      <div class="info-row"><span>Patient</span>
+        <span>{{ b.patientName }}<span *ngIf="b.patientAge"> (Age {{ b.patientAge }})</span></span>
+      </div>
+      <!-- Phone: shown to admin for reference, hidden from regular user (unnecessary clutter) -->
+      <div class="info-row" *ngIf="auth.isAdminOrSuper()">
+        <span>Phone</span><span>{{ b.phone }}</span>
+      </div>
+      <div class="info-row"><span>Appointment</span>
+        <span>{{ b.appointmentDate | date:'dd MMM yyyy' }} at {{ b.appointmentSlot }}</span>
+      </div>
+      <div class="info-row"><span>Collection</span>
+        <span>{{ b.collectionType === 'HOME' ? 'Home — ' + b.collectionAddress : 'Visit Lab' }}</span>
+      </div>
+      <div class="info-row"><span>Payment</span><span>{{ b.paymentMethod }}</span></div>
+      <div class="info-row total"><span>Total Amount</span>
+        <span>₹{{ b.totalAmount | number:'1.0-0' }}</span>
+      </div>
     </div>
-    <div class="booking-footer" *ngIf="b.status==='CONFIRMED'">
+    <div class="booking-footer" *ngIf="b.status === 'CONFIRMED'">
       <button class="btn-cancel" (click)="cancel(b.bookingRef)">Cancel Booking</button>
     </div>
   </div>

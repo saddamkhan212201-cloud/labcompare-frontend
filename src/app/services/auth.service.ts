@@ -10,6 +10,7 @@ export interface LoginResponse {
   username:   string;
   role:       string;
   adminLabId: number | null;
+  phone:      string | null;   // ← new: returned on login, stored in session
 }
 
 interface ApiResp<T> { success: boolean; message: string; data: T; }
@@ -33,23 +34,29 @@ export class AuthService {
             username:   data.username,
             role:       data.role,
             adminLabId: data.adminLabId ?? null,
+            phone:      data.phone      ?? null,   // ← store phone
           }));
-          // Reload cart so the logged-in user's items are loaded
           this.cart.reloadForUser();
         })
       );
   }
 
-  /** email is optional — passed only during registration */
-  register(username: string, password: string, email?: string): Observable<any> {
+  register(username: string, password: string, phone: string, email?: string): Observable<any> {
     return this.http.post<ApiResp<string>>(
       `${this.base}/auth/register`,
-      { username, password, email: email ?? '' }
+      { username, password, phone, email: email ?? '' }
     );
   }
 
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<ApiResp<string>>(`${this.base}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(email: string, otp: string, newPassword: string): Observable<any> {
+    return this.http.post<ApiResp<string>>(`${this.base}/auth/reset-password`, { email, otp, newPassword });
+  }
+
   logout() {
-    // Don't clear cart — it's saved per user and reloads on next login
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
   }
@@ -62,10 +69,10 @@ export class AuthService {
     return u ? JSON.parse(u) : null;
   }
 
-  getRole():     string | null { return this.getUser()?.role       ?? null; }
-  getUsername(): string | null { return this.getUser()?.username   ?? null; }
-
+  getRole():       string | null { return this.getUser()?.role       ?? null; }
+  getUsername():   string | null { return this.getUser()?.username   ?? null; }
   getAdminLabId(): number | null { return this.getUser()?.adminLabId ?? null; }
+  getPhone():      string | null { return this.getUser()?.phone      ?? null; }
 
   isAdmin():        boolean { return this.getRole() === 'ADMIN'; }
   isSuperAdmin():   boolean { return this.getRole() === 'SUPERADMIN'; }
