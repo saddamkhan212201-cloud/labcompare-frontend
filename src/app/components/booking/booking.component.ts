@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService, PriceDTO, BookingDTO, BookingRequest } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
+import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { CartItem } from '../search/search.component';
 
@@ -44,12 +45,19 @@ export class BookingComponent implements OnInit {
     private api: ApiService,
     private router: Router,
     private zone: NgZone,
-    private cartSvc: CartService
+    private cartSvc: CartService,
+    private auth: AuthService
   ) {
     this.navState = this.router.getCurrentNavigation()?.extras?.state ?? window.history.state;
   }
 
   ngOnInit() {
+    // Always pre-fill phone from the logged-in user's JWT so bookings are
+    // always saved with the same phone that's in the token — "My Bookings"
+    // queries by this phone, so they must match.
+    const sessionPhone = this.auth.getPhone();
+    if (sessionPhone) this.form.phone = sessionPhone;
+
     if (this.navState?.price) {
       this.price     = this.navState.price;
       this.cartItems = [{ price: this.navState.price, testName: this.navState.price.testName }];
