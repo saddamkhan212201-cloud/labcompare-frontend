@@ -16,54 +16,96 @@
     </div>
   </ng-container>
 
-  <!-- ── Regular USER: auto-loading indicator ────────────────────────── -->
-  <ng-container *ngIf="!auth.isAdminOrSuper()">
-    <p class="user-hint" *ngIf="!searched && loading">Loading your bookings...</p>
-  </ng-container>
+  <!-- ── Loading ──────────────────────────────────────────────────────── -->
+  <div class="loading-row" *ngIf="loading">Loading your bookings...</div>
 
   <span class="err-msg" *ngIf="error">{{ error }}</span>
 
-  <!-- ── Loading spinner ─────────────────────────────────────────────── -->
-  <div class="loading-row" *ngIf="loading">Fetching bookings...</div>
-
-  <!-- ── Empty state ─────────────────────────────────────────────────── -->
-  <div *ngIf="searched && !loading && bookings.length === 0" class="empty-state">
+  <!-- ── Empty state ──────────────────────────────────────────────────── -->
+  <div *ngIf="searched && !loading && groups.length === 0" class="empty-state">
     <ng-container *ngIf="auth.isAdminOrSuper()">No bookings found for this number.</ng-container>
     <ng-container *ngIf="!auth.isAdminOrSuper()">You have no bookings yet. <a routerLink="/search">Book a test</a></ng-container>
   </div>
 
-  <!-- ── Booking cards ───────────────────────────────────────────────── -->
-  <div *ngFor="let b of bookings" class="booking-card">
+  <!-- ── Booking cards ─────────────────────────────────────────────────── -->
+  <div *ngFor="let g of groups; let i = index" class="booking-card">
+
+    <!-- Header -->
     <div class="booking-header">
       <div>
-        <div class="booking-ref">{{ b.bookingRef }}</div>
-        <div class="booking-date">Booked on {{ b.createdAt | date:'dd MMM yyyy, h:mm a' }}</div>
+        <!-- Group: show test count + date. Single: show date only -->
+        <div class="booking-title" *ngIf="g.isGroup">
+          🧪 {{ g.bookings.length }} Tests &nbsp;·&nbsp; {{ g.appointmentDate | date:'dd MMM yyyy' }}
+        </div>
+        <div class="booking-title" *ngIf="!g.isGroup">
+          🧪 {{ g.bookings[0].testName }}
+        </div>
+        <div class="booking-date">Booked on {{ g.bookedAt | date:'dd MMM yyyy, h:mm a' }}</div>
       </div>
-      <span class="status-badge" [ngClass]="statusClass(b.status)">{{ b.status }}</span>
+      <span class="status-badge" [ngClass]="statusClass(g.status)">{{ g.status }}</span>
     </div>
+
+    <!-- Body -->
     <div class="booking-body">
-      <div class="info-row"><span>Test</span><span>{{ b.testName }}</span></div>
-      <div class="info-row"><span>Lab</span><span>{{ b.labName }}</span></div>
-      <div class="info-row"><span>Patient</span>
-        <span>{{ b.patientName }}<span *ngIf="b.patientAge"> (Age {{ b.patientAge }})</span></span>
+
+      <!-- Group: show test list (collapsed by default) -->
+      <ng-container *ngIf="g.isGroup">
+        <div class="info-row">
+          <span>Tests</span>
+          <span>
+            <span class="test-toggle" (click)="toggleExpand(i)">
+              {{ expandedIdx === i ? 'Hide tests ▲' : 'Show ' + g.bookings.length + ' tests ▼' }}
+            </span>
+          </span>
+        </div>
+        <div class="test-list" *ngIf="expandedIdx === i">
+          <div *ngFor="let b of g.bookings; let n = index" class="test-list-item">
+            <span class="test-num">{{ n + 1 }}</span>
+            <span class="test-name">{{ b.testName }}</span>
+            <span class="test-status" [ngClass]="statusClass(b.status)">{{ b.status }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Single: show test name as info row -->
+      <div class="info-row" *ngIf="!g.isGroup">
+        <span>Test</span><span>{{ g.bookings[0].testName }}</span>
       </div>
-      <!-- Phone: shown to admin for reference, hidden from regular user (unnecessary clutter) -->
+
+      <div class="info-row"><span>Lab</span><span>{{ g.labName }}</span></div>
+      <div class="info-row">
+        <span>Patient</span>
+        <span>{{ g.patientName }}<span *ngIf="g.patientAge"> (Age {{ g.patientAge }})</span></span>
+      </div>
       <div class="info-row" *ngIf="auth.isAdminOrSuper()">
-        <span>Phone</span><span>{{ b.phone }}</span>
+        <span>Phone</span><span>{{ g.bookings[0].phone }}</span>
       </div>
-      <div class="info-row"><span>Appointment</span>
-        <span>{{ b.appointmentDate | date:'dd MMM yyyy' }} at {{ b.appointmentSlot }}</span>
+      <div class="info-row">
+        <span>Appointment</span>
+        <span>{{ g.appointmentDate | date:'dd MMM yyyy' }} at {{ g.appointmentSlot }}</span>
       </div>
-      <div class="info-row"><span>Collection</span>
-        <span>{{ b.collectionType === 'HOME' ? 'Home — ' + b.collectionAddress : 'Visit Lab' }}</span>
+      <div class="info-row">
+        <span>Collection</span>
+        <span>{{ g.collectionType === 'HOME' ? 'Home — ' + g.collectionAddress : 'Visit Lab' }}</span>
       </div>
-      <div class="info-row"><span>Payment</span><span>{{ b.paymentMethod }}</span></div>
-      <div class="info-row total"><span>Total Amount</span>
-        <span>₹{{ b.totalAmount | number:'1.0-0' }}</span>
+      <div class="info-row"><span>Payment</span><span>{{ g.paymentMethod }}</span></div>
+      <div class="info-row total">
+        <span>Total Amount</span>
+        <span>₹{{ g.totalAmount | number:'1.0-0' }}</span>
       </div>
     </div>
-    <div class="booking-footer" *ngIf="b.status === 'CONFIRMED'">
-      <button class="btn-cancel" (click)="cancel(b.bookingRef)">Cancel Booking</button>
+
+    <!-- Footer: cancel button -->
+    <div class="booking-footer" *ngIf="!g.allCancelled">
+      <!-- Group cancel -->
+      <button *ngIf="g.isGroup" class="btn-cancel" (click)="cancelGroup(g)">
+        Cancel All Tests
+      </button>
+      <!-- Single cancel -->
+      <button *ngIf="!g.isGroup" class="btn-cancel" (click)="cancel(g.bookings[0].bookingRef)">
+        Cancel Booking
+      </button>
     </div>
+
   </div>
 </div>

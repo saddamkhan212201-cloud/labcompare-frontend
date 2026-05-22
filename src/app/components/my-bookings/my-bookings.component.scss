@@ -220,3 +220,87 @@ h1 {
   .info-row span:last-child { text-align: left; }
   .info-row.total { flex-direction: row; }
 }
+
+/* ── Grouped booking extras ── */
+.booking-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+.test-toggle {
+  color: #1D9E75;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.test-toggle:hover { text-decoration: underline; }
+
+.test-list {
+  background: #f8fdfb;
+  border: 1px solid #d4ede4;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.test-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.test-num {
+  background: #1D9E75;
+  color: #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.test-name {
+  flex: 1;
+  color: #222;
+  font-weight: 500;
+}
+
+.test-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.btn-secondary {
+  background: white;
+  color: #1D9E75;
+  border: 1.5px solid #1D9E75;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  min-height: 52px;
+  flex-shrink: 0;
+}
+.btn-secondary:hover { background: #f0fdf8; }
+.btn-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.user-hint { font-size: 14px; color: #888; margin-bottom: 8px; }
+.loading-row { text-align: center; padding: 2rem; color: #888; font-size: 14px; }
