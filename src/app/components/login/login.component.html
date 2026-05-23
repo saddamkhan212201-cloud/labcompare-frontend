@@ -12,7 +12,7 @@
       <p>Lab Test Price Comparison &amp; Booking</p>
     </div>
 
-    <!-- ── Tab row (login / register) ───────────────────────────────────── -->
+    <!-- ── Tab row ───────────────────────────────────────────────────────── -->
     <div class="tab-row" *ngIf="mode === 'login' || mode === 'register'">
       <button class="tab-btn" [class.active]="mode==='login'"    (click)="switchMode('login')">Login</button>
       <button class="tab-btn" [class.active]="mode==='register'" (click)="switchMode('register')">Register</button>
@@ -44,10 +44,30 @@
 
       <div class="form-group">
         <label>Password</label>
-        <input [(ngModel)]="loginPassword"
-               type="password"
-               placeholder="Enter password"
-               autocomplete="current-password" />
+        <div class="input-eye-wrap">
+          <input [(ngModel)]="loginPassword"
+                 [type]="showLoginPassword ? 'text' : 'password'"
+                 placeholder="Enter password"
+                 autocomplete="current-password" />
+          <button type="button" class="eye-btn" (click)="showLoginPassword = !showLoginPassword"
+                  [attr.aria-label]="showLoginPassword ? 'Hide password' : 'Show password'">
+            <!-- Eye open -->
+            <svg *ngIf="!showLoginPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <!-- Eye off -->
+            <svg *ngIf="showLoginPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="forgot-link-row">
@@ -56,22 +76,13 @@
 
       <button class="submit-btn" (click)="submit()" [disabled]="loading">
         <span *ngIf="!loading">Login</span>
-        <span *ngIf="loading" class="spinner-wrap">
-          <span class="btn-spinner"></span> Please wait...
-        </span>
+        <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Please wait...</span>
       </button>
 
-      <!-- Default credentials hint -->
       <div class="hint-box">
         <div class="hint-title">🔑 Default Credentials</div>
-        <div class="hint-row">
-          <span class="role-badge admin">Admin</span>
-          <span>admin / admin123</span>
-        </div>
-        <div class="hint-row">
-          <span class="role-badge user">User</span>
-          <span>user / user123</span>
-        </div>
+        <div class="hint-row"><span class="role-badge admin">Admin</span><span>admin / admin123</span></div>
+        <div class="hint-row"><span class="role-badge user">User</span><span>user / user123</span></div>
       </div>
 
     </div>
@@ -81,7 +92,6 @@
     <!-- ════════════════════════════════════════════════════════════════════ -->
     <div class="form-body" *ngIf="mode === 'register'">
 
-      <!-- Email — placed first, above all other fields as requested -->
       <div class="form-group">
         <label>Email Address <span style="color:#e53935">*</span></label>
         <input [(ngModel)]="registerEmail"
@@ -96,18 +106,54 @@
 
       <div class="form-group">
         <label>Password <span style="color:#e53935">*</span></label>
-        <input [(ngModel)]="registerPassword"
-               type="password"
-               placeholder="At least 6 characters"
-               autocomplete="new-password" />
+        <div class="input-eye-wrap">
+          <input [(ngModel)]="registerPassword"
+                 [type]="showRegisterPassword ? 'text' : 'password'"
+                 placeholder="At least 6 characters"
+                 autocomplete="new-password" />
+          <button type="button" class="eye-btn" (click)="showRegisterPassword = !showRegisterPassword"
+                  [attr.aria-label]="showRegisterPassword ? 'Hide password' : 'Show password'">
+            <svg *ngIf="!showRegisterPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg *ngIf="showRegisterPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="form-group">
         <label>Confirm Password <span style="color:#e53935">*</span></label>
-        <input [(ngModel)]="confirmPassword"
-               type="password"
-               placeholder="Re-enter password"
-               autocomplete="new-password" />
+        <div class="input-eye-wrap">
+          <input [(ngModel)]="confirmPassword"
+                 [type]="showConfirmPassword ? 'text' : 'password'"
+                 placeholder="Re-enter password"
+                 autocomplete="new-password" />
+          <button type="button" class="eye-btn" (click)="showConfirmPassword = !showConfirmPassword"
+                  [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+            <svg *ngIf="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg *ngIf="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="form-group">
@@ -124,9 +170,7 @@
 
       <button class="submit-btn" (click)="submit()" [disabled]="loading">
         <span *ngIf="!loading">Create Account</span>
-        <span *ngIf="loading" class="spinner-wrap">
-          <span class="btn-spinner"></span> Please wait...
-        </span>
+        <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Please wait...</span>
       </button>
 
     </div>
@@ -139,8 +183,7 @@
       <!-- Step 1 — Enter registered email -->
       <ng-container *ngIf="!otpSent">
         <p class="forgot-desc">
-          Enter your registered email address and we will send you a
-          one-time password (OTP).
+          Enter your registered email address and we will send you a one-time password (OTP).
         </p>
         <div class="form-group">
           <label>Email Address</label>
@@ -152,13 +195,11 @@
         </div>
         <button class="submit-btn" (click)="sendOtp()" [disabled]="loading">
           <span *ngIf="!loading">Send OTP</span>
-          <span *ngIf="loading" class="spinner-wrap">
-            <span class="btn-spinner"></span> Sending...
-          </span>
+          <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Sending...</span>
         </button>
       </ng-container>
 
-      <!-- Step 2 — Enter OTP + new password -->
+      <!-- Step 2 — OTP + new password -->
       <ng-container *ngIf="otpSent">
         <div class="otp-notice">
           📧 OTP sent to <strong>{{ forgotEmail }}</strong><br/>
@@ -175,25 +216,59 @@
 
         <div class="form-group">
           <label>New Password</label>
-          <input [(ngModel)]="newPassword"
-                 type="password"
-                 placeholder="At least 6 characters"
-                 autocomplete="new-password" />
+          <div class="input-eye-wrap">
+            <input [(ngModel)]="newPassword"
+                   [type]="showNewPassword ? 'text' : 'password'"
+                   placeholder="At least 6 characters"
+                   autocomplete="new-password" />
+            <button type="button" class="eye-btn" (click)="showNewPassword = !showNewPassword"
+                    [attr.aria-label]="showNewPassword ? 'Hide password' : 'Show password'">
+              <svg *ngIf="!showNewPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg *ngIf="showNewPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Confirm New Password</label>
-          <input [(ngModel)]="confirmNew"
-                 type="password"
-                 placeholder="Re-enter new password"
-                 autocomplete="new-password" />
+          <div class="input-eye-wrap">
+            <input [(ngModel)]="confirmNew"
+                   [type]="showConfirmNew ? 'text' : 'password'"
+                   placeholder="Re-enter new password"
+                   autocomplete="new-password" />
+            <button type="button" class="eye-btn" (click)="showConfirmNew = !showConfirmNew"
+                    [attr.aria-label]="showConfirmNew ? 'Hide password' : 'Show password'">
+              <svg *ngIf="!showConfirmNew" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg *ngIf="showConfirmNew" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <button class="submit-btn" (click)="resetPassword()" [disabled]="loading">
           <span *ngIf="!loading">Reset Password</span>
-          <span *ngIf="loading" class="spinner-wrap">
-            <span class="btn-spinner"></span> Resetting...
-          </span>
+          <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Resetting...</span>
         </button>
 
         <button class="resend-otp-btn" [disabled]="loading"

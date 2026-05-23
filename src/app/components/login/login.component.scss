@@ -284,3 +284,38 @@ input {
   .brand-icon { width: 48px; height: 48px; }
   .login-header h1 { font-size: 19px; }
 }
+
+/* ── Show/hide password wrapper ── */
+.input-eye-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    flex: 1;
+    padding-right: 44px; /* leave room for the eye button */
+  }
+}
+
+.eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+  min-width: 32px;
+  min-height: 32px;
+
+  &:hover  { color: #1D9E75; }
+  &:focus  { outline: none; color: #1D9E75; }
+}
