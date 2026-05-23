@@ -10,7 +10,7 @@ export interface LoginResponse {
   username:   string;
   role:       string;
   adminLabId: number | null;
-  phone:      string | null;   // ← new: returned on login, stored in session
+  phone:      string | null;
 }
 
 interface ApiResp<T> { success: boolean; message: string; data: T; }
@@ -23,9 +23,18 @@ export class AuthService {
 
   constructor(private http: HttpClient, private cart: CartService) {}
 
-  login(username: string, password: string): Observable<LoginResponse> {
+  /**
+   * Login with email + password.
+   *
+   * Sends { email, password } — the backend resolves by email for regular
+   * user accounts and falls back to username for legacy admin/superadmin
+   * accounts. No change needed on the frontend for admin logins: the
+   * admin's username is accepted server-side via the email field as a
+   * username fallback.
+   */
+  login(email: string, password: string): Observable<LoginResponse> {
     return this.http
-      .post<ApiResp<LoginResponse>>(`${this.base}/auth/login`, { username, password })
+      .post<ApiResp<LoginResponse>>(`${this.base}/auth/login`, { email, password })
       .pipe(
         map(r => r.data),
         tap(data => {
@@ -34,26 +43,36 @@ export class AuthService {
             username:   data.username,
             role:       data.role,
             adminLabId: data.adminLabId ?? null,
-            phone:      data.phone      ?? null,   // ← store phone
+            phone:      data.phone      ?? null,
           }));
           this.cart.reloadForUser();
         })
       );
   }
 
-  register(username: string, password: string, phone: string, email?: string): Observable<any> {
+  /**
+   * Register with email + password + phone.
+   * Username is derived server-side from the email local-part.
+   */
+  register(email: string, password: string, phone: string): Observable<any> {
     return this.http.post<ApiResp<string>>(
       `${this.base}/auth/register`,
-      { username, password, phone, email: email ?? '' }
+      { email, password, phone }
     );
   }
 
+  /** Step 1: request OTP to be sent to the registered email */
   forgotPassword(email: string): Observable<any> {
-    return this.http.post<ApiResp<string>>(`${this.base}/auth/forgot-password`, { email });
+    return this.http.post<ApiResp<string>>(
+      `${this.base}/auth/forgot-password`, { email }
+    );
   }
 
+  /** Step 2: submit OTP + new password */
   resetPassword(email: string, otp: string, newPassword: string): Observable<any> {
-    return this.http.post<ApiResp<string>>(`${this.base}/auth/reset-password`, { email, otp, newPassword });
+    return this.http.post<ApiResp<string>>(
+      `${this.base}/auth/reset-password`, { email, otp, newPassword }
+    );
   }
 
   logout() {

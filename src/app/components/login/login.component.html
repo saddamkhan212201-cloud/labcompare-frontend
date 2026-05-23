@@ -1,6 +1,7 @@
 <div class="login-page">
   <div class="login-card">
-    <!-- Brand header — unchanged -->
+
+    <!-- ── Brand header ──────────────────────────────────────────────────── -->
     <div class="login-header">
       <div class="brand-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -11,109 +12,199 @@
       <p>Lab Test Price Comparison &amp; Booking</p>
     </div>
 
-    <!-- Tab switch — shown only on login/register -->
+    <!-- ── Tab row (login / register) ───────────────────────────────────── -->
     <div class="tab-row" *ngIf="mode === 'login' || mode === 'register'">
       <button class="tab-btn" [class.active]="mode==='login'"    (click)="switchMode('login')">Login</button>
       <button class="tab-btn" [class.active]="mode==='register'" (click)="switchMode('register')">Register</button>
     </div>
 
-    <!-- Forgot password back link -->
+    <!-- ── Forgot-password back link ─────────────────────────────────────── -->
     <div class="forgot-back-row" *ngIf="mode === 'forgot'">
       <button class="forgot-back-btn" (click)="switchMode('login')">← Back to Login</button>
       <span class="forgot-title">Reset Password</span>
     </div>
 
-    <!-- Alerts -->
+    <!-- ── Alerts ────────────────────────────────────────────────────────── -->
     <div class="alert alert-error"   *ngIf="error">{{ error }}</div>
     <div class="alert alert-success" *ngIf="success">{{ success }}</div>
 
-    <!-- ─── LOGIN / REGISTER FORM — unchanged ─── -->
-    <div class="form-body" *ngIf="mode === 'login' || mode === 'register'">
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- LOGIN FORM                                                          -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div class="form-body" *ngIf="mode === 'login'">
+
       <div class="form-group">
-        <label>Username</label>
-        <input [(ngModel)]="username" placeholder="Enter username" autocomplete="username" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input [(ngModel)]="password" type="password" placeholder="Enter password" autocomplete="current-password" />
-      </div>
-      <div class="form-group" *ngIf="mode==='register'">
-        <label>Confirm Password</label>
-        <input [(ngModel)]="confirmPassword" type="password" placeholder="Re-enter password" />
+        <label>Email Address</label>
+        <input [(ngModel)]="loginEmail"
+               type="email"
+               placeholder="your@email.com"
+               autocomplete="email"
+               inputmode="email" />
       </div>
 
-      <div class="form-group" *ngIf="mode==='register'">
+      <div class="form-group">
+        <label>Password</label>
+        <input [(ngModel)]="loginPassword"
+               type="password"
+               placeholder="Enter password"
+               autocomplete="current-password" />
+      </div>
+
+      <div class="forgot-link-row">
+        <span class="forgot-link" (click)="switchMode('forgot')">Forgot password?</span>
+      </div>
+
+      <button class="submit-btn" (click)="submit()" [disabled]="loading">
+        <span *ngIf="!loading">Login</span>
+        <span *ngIf="loading" class="spinner-wrap">
+          <span class="btn-spinner"></span> Please wait...
+        </span>
+      </button>
+
+      <!-- Default credentials hint -->
+      <div class="hint-box">
+        <div class="hint-title">🔑 Default Credentials</div>
+        <div class="hint-row">
+          <span class="role-badge admin">Admin</span>
+          <span>admin / admin123</span>
+        </div>
+        <div class="hint-row">
+          <span class="role-badge user">User</span>
+          <span>user / user123</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- REGISTER FORM                                                       -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div class="form-body" *ngIf="mode === 'register'">
+
+      <!-- Email — placed first, above all other fields as requested -->
+      <div class="form-group">
+        <label>Email Address <span style="color:#e53935">*</span></label>
+        <input [(ngModel)]="registerEmail"
+               type="email"
+               placeholder="your@email.com"
+               autocomplete="email"
+               inputmode="email" />
+        <small style="color:#888;font-size:11px;margin-top:3px;display:block;">
+          Used to log in and recover your account.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label>Password <span style="color:#e53935">*</span></label>
+        <input [(ngModel)]="registerPassword"
+               type="password"
+               placeholder="At least 6 characters"
+               autocomplete="new-password" />
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password <span style="color:#e53935">*</span></label>
+        <input [(ngModel)]="confirmPassword"
+               type="password"
+               placeholder="Re-enter password"
+               autocomplete="new-password" />
+      </div>
+
+      <div class="form-group">
         <label>Mobile Number <span style="color:#e53935">*</span></label>
-        <input [(ngModel)]="registerPhone" type="tel" inputmode="numeric" maxlength="10"
+        <input [(ngModel)]="registerPhone"
+               type="tel"
+               inputmode="numeric"
+               maxlength="10"
                placeholder="10-digit mobile number" />
         <small style="color:#888;font-size:11px;margin-top:3px;display:block;">
           Used to track your bookings. Cannot be changed later.
         </small>
       </div>
 
-      <!-- Forgot password link — only on login -->
-      <div class="forgot-link-row" *ngIf="mode === 'login'">
-        <span class="forgot-link" (click)="switchMode('forgot')">Forgot password?</span>
-      </div>
-
       <button class="submit-btn" (click)="submit()" [disabled]="loading">
-        <span *ngIf="!loading">{{ mode === 'login' ? 'Login' : 'Create Account' }}</span>
-        <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Please wait...</span>
+        <span *ngIf="!loading">Create Account</span>
+        <span *ngIf="loading" class="spinner-wrap">
+          <span class="btn-spinner"></span> Please wait...
+        </span>
       </button>
+
     </div>
 
-    <!-- ─── FORGOT PASSWORD FORM ─── -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- FORGOT PASSWORD FORM                                                -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
     <div class="form-body" *ngIf="mode === 'forgot'">
 
-      <!-- Step 1: Enter email -->
+      <!-- Step 1 — Enter registered email -->
       <ng-container *ngIf="!otpSent">
-        <p class="forgot-desc">Enter your registered email address and we will send you a one-time password (OTP).</p>
+        <p class="forgot-desc">
+          Enter your registered email address and we will send you a
+          one-time password (OTP).
+        </p>
         <div class="form-group">
           <label>Email Address</label>
-          <input [(ngModel)]="forgotEmail" type="email" placeholder="your@email.com" autocomplete="email" />
+          <input [(ngModel)]="forgotEmail"
+                 type="email"
+                 placeholder="your@email.com"
+                 autocomplete="email"
+                 inputmode="email" />
         </div>
         <button class="submit-btn" (click)="sendOtp()" [disabled]="loading">
           <span *ngIf="!loading">Send OTP</span>
-          <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Sending...</span>
+          <span *ngIf="loading" class="spinner-wrap">
+            <span class="btn-spinner"></span> Sending...
+          </span>
         </button>
       </ng-container>
 
-      <!-- Step 2: OTP + new password -->
+      <!-- Step 2 — Enter OTP + new password -->
       <ng-container *ngIf="otpSent">
         <div class="otp-notice">
-          📧 OTP sent to <strong>{{forgotEmail}}</strong><br/>
+          📧 OTP sent to <strong>{{ forgotEmail }}</strong><br/>
           <span>Check your inbox. It expires in 10 minutes.</span>
         </div>
+
         <div class="form-group">
           <label>Enter OTP</label>
-          <input [(ngModel)]="otpCode" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" />
+          <input [(ngModel)]="otpCode"
+                 placeholder="6-digit OTP"
+                 maxlength="6"
+                 inputmode="numeric" />
         </div>
+
         <div class="form-group">
           <label>New Password</label>
-          <input [(ngModel)]="newPassword" type="password" placeholder="At least 6 characters" />
+          <input [(ngModel)]="newPassword"
+                 type="password"
+                 placeholder="At least 6 characters"
+                 autocomplete="new-password" />
         </div>
+
         <div class="form-group">
           <label>Confirm New Password</label>
-          <input [(ngModel)]="confirmNew" type="password" placeholder="Re-enter new password" />
+          <input [(ngModel)]="confirmNew"
+                 type="password"
+                 placeholder="Re-enter new password"
+                 autocomplete="new-password" />
         </div>
+
         <button class="submit-btn" (click)="resetPassword()" [disabled]="loading">
           <span *ngIf="!loading">Reset Password</span>
-          <span *ngIf="loading" class="spinner-wrap"><span class="btn-spinner"></span> Resetting...</span>
+          <span *ngIf="loading" class="spinner-wrap">
+            <span class="btn-spinner"></span> Resetting...
+          </span>
         </button>
-        <button class="resend-otp-btn" (click)="otpSent=false; success=''; error=''">
+
+        <button class="resend-otp-btn" [disabled]="loading"
+                (click)="otpSent=false; success=''; error=''">
           Didn't receive OTP? Resend
         </button>
       </ng-container>
 
     </div>
 
-    <!-- Default credentials hint — unchanged -->
-    <div class="hint-box" *ngIf="mode==='login'">
-      <div class="hint-title">🔑 Default Credentials</div>
-      <div class="hint-row"><span class="role-badge admin">Admin</span> admin / admin123</div>
-      <div class="hint-row"><span class="role-badge user">User</span> user / user123</div>
-    </div>
-
     <a class="back-link" routerLink="/search">← Back to Search</a>
+
   </div>
 </div>
